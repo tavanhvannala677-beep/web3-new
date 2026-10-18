@@ -166,6 +166,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   const [isUploadingRootIpfs, setIsUploadingRootIpfs] = useState<boolean>(false);
   const [isMinting, setIsMinting] = useState(false);
   const [mintedProductResult, setMintedProductResult] = useState<TraceableProduct | null>(null);
+  const [selectedViewProduct, setSelectedViewProduct] = useState<TraceableProduct | null>(null);
 
   // Step 2: Processor Checkpoint State
   const [selectedTokenId, setSelectedTokenId] = useState<number>(products[0]?.tokenId || 1);
@@ -1106,11 +1107,78 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                   ))}
                 </div>
 
-                <div className="bg-white rounded-xl p-3 border border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-xs">
-                  <span className="text-slate-700 font-medium">{locationName}</span>
-                  <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-mono font-bold">
-                    GPS: {lat}, {lng}
-                  </span>
+                {/* Editable Location & GPS Inputs */}
+                <div className="bg-white rounded-2xl p-4 border border-emerald-200 space-y-3 shadow-sm">
+                  <div>
+                    <label
+                      htmlFor="origin-location-name"
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
+                      ຊື່ສະຖານທີ່ / ບ້ານ / ເມືອງ / ແຂວງ (Location Name) *
+                    </label>
+                    <input
+                      id="origin-location-name"
+                      type="text"
+                      required
+                      value={locationName}
+                      onChange={(e) => setLocationName(e.target.value)}
+                      placeholder="ເຊັ່ນ: ບ້ານຫຼັກ 40 ເມືອງປາກຊອງ ແຂວງຈຳປາສັກ (Paksong Plateau)"
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label
+                        htmlFor="origin-lat"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        ລະຕິຈູດ (Latitude) *
+                      </label>
+                      <input
+                        id="origin-lat"
+                        type="number"
+                        step="any"
+                        required
+                        value={lat}
+                        onChange={(e) => setLat(Number(e.target.value))}
+                        placeholder="15.1764"
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="origin-lng"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        ລອງຕິຈູດ (Longitude) *
+                      </label>
+                      <input
+                        id="origin-lng"
+                        type="number"
+                        step="any"
+                        required
+                        value={lng}
+                        onChange={(e) => setLng(Number(e.target.value))}
+                        placeholder="106.2338"
+                        className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500">
+                    <span className="font-mono text-emerald-800 font-bold">
+                      📍 ພິກັດປັດຈຸບັນ: {lat}, {lng}
+                    </span>
+                    <a
+                      href={`https://www.google.com/maps?q=${lat},${lng}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-emerald-700 font-bold hover:underline inline-flex items-center gap-1"
+                    >
+                      ເປີດເບິ່ງເທິງ Google Maps ↗
+                    </a>
+                  </div>
                 </div>
               </div>
 
@@ -1225,18 +1293,56 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
               </div>
 
               {(() => {
-                const displayProd = mintedProductResult || products[0];
-                if (!displayProd) return null;
+                const displayProd = mintedProductResult || selectedViewProduct;
+                if (!displayProd) {
+                  return (
+                    <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-7 text-center space-y-3">
+                      <div className="w-14 h-14 mx-auto rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-400">
+                        <Sparkles className="w-6 h-6" aria-hidden="true" />
+                      </div>
+                      <h4 className="font-extrabold text-slate-800 text-sm">
+                        ຍັງບໍ່ທັນມີລະຫັດສິນຄ້າ (No Code Generated Yet)
+                      </h4>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        ກະລຸນາກວດສອບຂໍ້ມູນຜົນຜະລິດດ້ານຊ້າຍ ແລະ ກົດປຸ່ມ{' '}
+                        <strong className="text-emerald-700">"1. ຢືນຢັນລົງທະບຽນສິນຄ້າລົງ Blockchain"</strong>{' '}
+                        ເພື່ອໃຫ້ Smart Contract ອອກລະຫັດສິນຄ້າ (Product Code) ປະຈຳລັອດນີ້.
+                      </p>
+                      {products.length > 0 && (
+                        <div className="pt-2 border-t border-slate-200/60 mt-3">
+                          <p className="text-[11px] text-slate-500">
+                            💡 ຕ້ອງການເບິ່ງລະຫັດສິນຄ້າເກົ່າ? ກົດປຸ່ມ <strong>"ເບິ່ງລະຫັດ"</strong> ໃນຕາຕະລາງດ້ານລຸ່ມ
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
                 const formattedCode = `LT-2026-${String(displayProd.tokenId).padStart(3, '0')}`;
+                const isNewlyMinted = mintedProductResult?.tokenId === displayProd.tokenId;
+
                 return (
-                  <div className="bg-slate-50 border-2 border-emerald-500/40 rounded-2xl p-5 space-y-4">
+                  <div className="bg-slate-50 border-2 border-emerald-500 rounded-2xl p-5 space-y-4 shadow-sm">
                     <div className="flex items-center justify-between gap-2">
                       <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
-                        On-Chain ID #{displayProd.tokenId}
+                        {isNewlyMinted ? '🎉 ລົງທະບຽນສຳເລັດ!' : `On-Chain ID #${displayProd.tokenId}`}
                       </span>
-                      <span className="text-xs font-bold text-slate-500">
-                        {displayProd.category === 'batch' ? '🌾 ກະສິກຳ (Batch)' : '🧣 ຫັດຖະກຳ (Craft)'}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-500">
+                          {displayProd.category === 'batch' ? '🌾 ກະສິກຳ (Batch)' : '🧣 ຫັດຖະກຳ (Craft)'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMintedProductResult(null);
+                            setSelectedViewProduct(null);
+                          }}
+                          className="text-[11px] font-bold text-slate-500 hover:text-slate-800 underline"
+                        >
+                          ✕ ລ້າງ
+                        </button>
+                      </div>
                     </div>
 
                     {/* Prominent Product Code Box */}
@@ -1256,7 +1362,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                           navigator.clipboard.writeText(formattedCode);
                           toast.success(`ຄັດລອກລະຫັດສິນຄ້າ ${formattedCode} ແລ້ວ! (Copied)`);
                         }}
-                        className="mt-1 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition"
+                        className="mt-1 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition shadow-sm"
                       >
                         📋 ຄັດລອກລະຫັດສິນຄ້າ (Copy Code)
                       </button>
@@ -1276,26 +1382,6 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                           : `1 ຜືນ (${displayProd.craftData?.nfcUid || 'Unique Item'})`}
                       </p>
                     </div>
-
-                    {/* Sample Generated Bag PIN Codes */}
-                    {displayProd.quota?.generatedUnits && displayProd.quota.generatedUnits.length > 0 && (
-                      <div className="bg-white rounded-xl p-3 border border-slate-200 space-y-1.5">
-                        <p className="text-[11px] font-bold text-slate-700">
-                          ລະຫັດ PIN ລາຍຖົງທີ່ສ້າງພ້ອມກັນ (Sample Bag PIN Codes):
-                        </p>
-                        <div className="grid grid-cols-2 gap-1.5">
-                          {displayProd.quota.generatedUnits.slice(0, 4).map((u, idx) => (
-                            <div
-                              key={u.unitCode}
-                              className="px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-mono flex items-center justify-between"
-                            >
-                              <span className="font-bold text-slate-700">ຖົງ #{idx + 1}:</span>
-                              <strong className="text-emerald-800">{u.pinCode}</strong>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <button
@@ -1380,10 +1466,17 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                       <div className="flex items-center gap-1.5 shrink-0">
                         <button
                           type="button"
-                          onClick={() => openQrLabelDialog(prod)}
-                          className="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 hover:bg-slate-100"
+                          onClick={() => {
+                            setSelectedViewProduct(prod);
+                            openQrLabelDialog(prod);
+                          }}
+                          className={`px-2.5 py-1.5 rounded-xl border text-xs font-bold transition shadow-sm ${
+                            prod.category === 'craft'
+                              ? 'border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100'
+                              : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                          }`}
                         >
-                          ໃບລະຫັດ
+                          {prod.category === 'craft' ? '🏷️ ພິມແທັກ QR' : 'ເບິ່ງລະຫັດ'}
                         </button>
                         <button
                           type="button"
@@ -1861,33 +1954,47 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
               </h3>
               <p className="text-xs text-slate-600">{qrModalProduct.producerName}</p>
 
-              <div className="my-3 p-4 bg-slate-900 text-white rounded-2xl border border-emerald-500/40">
-                <p className="text-[11px] uppercase tracking-wider text-emerald-300 font-bold">
-                  ລະຫັດສິນຄ້າຕົ້ນນ້ຳ (Product Code)
-                </p>
-                <p className="text-2xl font-mono font-extrabold tracking-widest text-amber-300 mt-1">
-                  LT-2026-{String(qrModalProduct.tokenId).padStart(3, '0')}
-                </p>
-                <p className="text-xs text-slate-300 mt-1">
-                  On-Chain Product ID: #{qrModalProduct.tokenId}
-                </p>
-              </div>
-
-              {qrModalProduct.quota?.generatedUnits && (
-                <div className="text-start bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                  <p className="text-[11px] font-bold text-slate-700">
-                    ລະຫັດ PIN ປະຈຳຖົງ (Unit Scratch PINs):
+              {/* Product Code & Hang Tag QR Code */}
+              {qrModalProduct.category === 'craft' ? (
+                /* Case 2: Handicraft (Silk) Hang Tag with QR Code */
+                <div className="my-3 p-4 bg-gradient-to-br from-purple-900 to-indigo-950 text-white rounded-2xl border border-purple-400/40 shadow-inner flex flex-col items-center space-y-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-purple-200 text-purple-900">
+                    🏷️ ປ້າຍແທັກຫ້ອຍຜ້າໄໝ (Handicraft Hang Tag • 1 ຜືນດຽວ)
+                  </span>
+                  <div className="p-3 bg-white rounded-2xl shadow-md my-1">
+                    <QRCodeSVG
+                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/product/${qrModalProduct.tokenId}/unit/1`}
+                      size={140}
+                      level="M"
+                    />
+                  </div>
+                  <p className="text-base font-mono font-black text-amber-300">
+                    LT-2026-{String(qrModalProduct.tokenId).padStart(3, '0')}
                   </p>
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {qrModalProduct.quota.generatedUnits.map((u, idx) => (
-                      <div
-                        key={u.unitCode}
-                        className="px-2 py-1 rounded bg-white border border-slate-200 text-[11px] font-mono flex justify-between"
-                      >
-                        <span>ຖົງ #{idx + 1}:</span>
-                        <strong className="text-emerald-800">{u.pinCode}</strong>
-                      </div>
-                    ))}
+                  <p className="text-[11px] text-purple-200">
+                    Unit 1 of 1 • ລະຫັດຊິບ NFC: {qrModalProduct.craftData?.nfcUid || 'TAG-01'}
+                  </p>
+                  <p className="text-[10px] text-purple-300 font-mono">
+                    /product/{qrModalProduct.tokenId}/unit/1
+                  </p>
+                </div>
+              ) : (
+                /* Case 1: Agriculture Batch Code */
+                <div className="my-3 p-4 bg-slate-900 text-white rounded-2xl border border-emerald-500/40 text-center">
+                  <p className="text-[11px] uppercase tracking-wider text-emerald-300 font-bold">
+                    ລະຫັດສິນຄ້າຕົ້ນນ້ຳປະຈຳລັອດ (Batch Product Code)
+                  </p>
+                  <p className="text-2xl font-mono font-extrabold tracking-widest text-amber-300 mt-1">
+                    LT-2026-{String(qrModalProduct.tokenId).padStart(3, '0')}
+                  </p>
+                  <p className="text-xs text-slate-300 mt-1">
+                    On-Chain Product ID: #{qrModalProduct.tokenId} • ນ້ຳໜັກສົດ:{' '}
+                    {qrModalProduct.batchData?.freshWeightKg ?? 500} kg
+                  </p>
+                  <div className="mt-3 p-2.5 rounded-xl bg-emerald-950/70 border border-emerald-700/60 text-[11px] text-emerald-300 text-start">
+                    💡 <strong>ສຳລັບສິນຄ້າກະສິກຳ (ກາເຟ):</strong> ສະຕິກເກີ QR Code ຂາຍຈິງປະຈຳແຕ່ລະຖົງ (
+                    {qrModalProduct.batchData?.plannedBagsCount ?? 150} ຖົງ) ພ້ອມລະຫັດຂູດ PIN ຈະພິມອອກໃນຂັ້ນຕອນ{' '}
+                    <strong>ໂຮງແປຮູບ (Processor)</strong> ເມື່ອບັນຈຸຫໍ່ສຳເລັດ.
                   </div>
                 </div>
               )}

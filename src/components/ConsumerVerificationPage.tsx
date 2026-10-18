@@ -12,12 +12,15 @@ import {
   KeyRound,
   Layers,
   MapPin,
+  Printer,
+  QrCode,
   Radio,
   Search,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { TraceableProduct } from '../types/traceability';
 import {
   getExplorerAddressUrl,
@@ -86,6 +89,7 @@ export const ConsumerVerificationPage: React.FC<ConsumerVerificationPageProps> =
     checking: false,
     foundOnLiveChain: false,
   });
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
   useEffect(() => {
     setSearchInput(`LT-2026-${String(selectedTokenId).padStart(3, '0')}`);
@@ -367,6 +371,31 @@ export const ConsumerVerificationPage: React.FC<ConsumerVerificationPageProps> =
               className="w-full h-full object-cover opacity-90"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/25 to-transparent" />
+            
+            {/* Top Right Floating QR Code Card on Image */}
+            <button
+              type="button"
+              onClick={() => setIsQrModalOpen(true)}
+              className="absolute top-4 right-4 p-2 bg-white/95 hover:bg-white rounded-2xl shadow-xl border border-slate-200 backdrop-blur transition flex items-center gap-2 group text-start z-10"
+              title="ກົດເພື່ອຂະຫຍາຍ ຫຼື ສະແກນ QR Code"
+            >
+              <div className="p-1 bg-white rounded-xl border border-slate-200 shadow-inner">
+                <QRCodeSVG
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/?productId=${product.tokenId}&page=consumer` : ''}
+                  size={50}
+                  level="M"
+                />
+              </div>
+              <div className="pr-1">
+                <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-1.5 py-0.5 rounded">
+                  📷 QR Code
+                </span>
+                <p className="text-xs font-extrabold text-slate-900 group-hover:text-emerald-700 mt-0.5">
+                  ສະແກນຜ່ານມືຖື
+                </p>
+              </div>
+            </button>
+
             <div className="absolute bottom-5 inset-x-5 text-white">
               <div className="flex flex-wrap items-center gap-2 mb-2">
                 <span className="px-2.5 py-1 rounded-lg bg-emerald-500 text-slate-950 text-xs font-mono font-extrabold">
@@ -410,6 +439,14 @@ export const ConsumerVerificationPage: React.FC<ConsumerVerificationPageProps> =
                       </div>
                     </div>
                     <div className="flex flex-wrap sm:flex-col gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setIsQrModalOpen(true)}
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition shadow-sm"
+                      >
+                        <QrCode className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+                        ສະແກນ QR Code
+                      </button>
                       <a
                         href={resolveIpfsUrl(product.certification.certIpfsHash)}
                         target="_blank"
@@ -680,6 +717,54 @@ export const ConsumerVerificationPage: React.FC<ConsumerVerificationPageProps> =
 
         {/* Right 5 Cols: Anti-Counterfeiting Claim + GPS Origin Map */}
         <div className="lg:col-span-5 space-y-6">
+          {/* Card 0: Dedicated Mobile Scan QR Code Card */}
+          <div className="bg-gradient-to-br from-white to-emerald-50/60 rounded-3xl border-2 border-emerald-500/60 shadow-md p-5 flex flex-col sm:flex-row items-center gap-4">
+            <div className="p-3 bg-white rounded-2xl border-2 border-dashed border-emerald-500 shadow-sm shrink-0 flex flex-col items-center">
+              <QRCodeSVG
+                value={typeof window !== 'undefined' ? `${window.location.origin}/?productId=${product.tokenId}&page=consumer` : ''}
+                size={110}
+                level="M"
+              />
+              <span className="text-[9px] font-mono font-bold text-slate-500 mt-1">
+                ID #{product.tokenId}
+              </span>
+            </div>
+            <div className="space-y-1.5 text-center sm:text-start flex-1 min-w-0">
+              <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-900">
+                  📱 ສະແກນດ້ວຍມືຖື (Mobile Scan)
+                </span>
+              </div>
+              <h3 className="text-base font-extrabold text-slate-900">
+                QR Code ປະຈຳສິນຄ້າ
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                ທ່ານສາມາດ <strong>ຍົກກ້ອງມືຖືຂຶ້ນມາສ່ອງ QR Code ນີ້</strong> ເພື່ອເປີດໜ້າ Passport ກວດສອບເທິງມືຖືໄດ້ທັນທີ!
+              </p>
+              <div className="pt-1 flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsQrModalOpen(true)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm"
+                >
+                  <QrCode className="w-3.5 h-3.5" aria-hidden="true" />
+                  🔍 ຂະຫຍາຍໃຫຍ່ & ພິມ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const url = typeof window !== 'undefined' ? `${window.location.origin}/?productId=${product.tokenId}&page=consumer` : '';
+                    navigator.clipboard.writeText(url);
+                    toast.success('ຄັດລອກລິ້ງກວດສອບແລ້ວ! (Copied)');
+                  }}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition"
+                >
+                  📋 ຄັດລອກລິ້ງ
+                </button>
+              </div>
+            </div>
+          </div>
+
           {/* Card 1: Anti-Counterfeiting Ownership Claim */}
           <div className="bg-white rounded-3xl border-2 border-emerald-600/80 shadow-md p-6">
             <div className="flex items-center gap-2.5 mb-2">
@@ -937,6 +1022,68 @@ export const ConsumerVerificationPage: React.FC<ConsumerVerificationPageProps> =
           </div>
         </div>
       </div>
+
+      {/* Printable / Large QR Code Modal Dialog */}
+      {isQrModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-200 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <span className="text-xs font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-full">
+                LAOTRACE DIGITAL PASSPORT
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsQrModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 flex items-center justify-center text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div id="printable-consumer-qr" className="p-6 border-2 border-dashed border-emerald-500 rounded-2xl bg-emerald-50/30 flex flex-col items-center space-y-3">
+              <h3 className="text-base font-extrabold text-slate-900">
+                {product.productName}
+              </h3>
+              <p className="text-xs text-slate-600">
+                ຜູ້ຜະລິດ: {product.producerName}
+              </p>
+
+              <div className="p-4 bg-white rounded-2xl shadow-md border border-slate-200 my-2">
+                <QRCodeSVG
+                  value={typeof window !== 'undefined' ? `${window.location.origin}/?productId=${product.tokenId}&page=consumer` : ''}
+                  size={200}
+                  level="H"
+                />
+              </div>
+
+              <span className="px-3 py-1 rounded-full text-xs font-mono font-black text-amber-300 bg-slate-900">
+                LT-2026-{String(product.tokenId).padStart(3, '0')} (ID #{product.tokenId})
+              </span>
+              <p className="text-[11px] font-mono text-slate-500 truncate max-w-xs">
+                {typeof window !== 'undefined' ? `${window.location.origin}/?productId=${product.tokenId}&page=consumer` : ''}
+              </p>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md"
+              >
+                <Printer className="w-4 h-4" aria-hidden="true" />
+                ພິມ QR Code ນີ້ (Print)
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsQrModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200"
+              >
+                ປິດ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

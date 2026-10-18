@@ -4,12 +4,17 @@ import {
   Award,
   CheckCircle2,
   Clock,
+  Coffee,
   ExternalLink,
+  Factory,
   FileCheck,
   FileText,
+  Layers,
   MapPin,
   RefreshCw,
   ShieldCheck,
+  Sparkles,
+  Sprout,
   Upload,
 } from 'lucide-react';
 import {
@@ -60,6 +65,7 @@ export const CertifierDashboard: React.FC<CertifierDashboardProps> = ({
   const [certIpfsHashInput, setCertIpfsHashInput] = useState<string>('');
   const [isUploadingCertIpfs, setIsUploadingCertIpfs] = useState<boolean>(false);
   const [isCertifying, setIsCertifying] = useState(false);
+  const [auditViewTab, setAuditViewTab] = useState<'timeline' | 'form'>('timeline');
 
   const selectedProduct =
     products.find((p) => p.tokenId === selectedTokenId) || products[0];
@@ -336,162 +342,417 @@ export const CertifierDashboard: React.FC<CertifierDashboardProps> = ({
                 </span>
               </div>
 
-              {/* Quick Info Summary */}
-              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs">
-                <div>
-                  <span className="text-slate-500 block">ສະຖານທີ່ & ພິກັດ (GPS Origin):</span>
-                  <strong className="text-slate-900">{selectedProduct.geo.locationName}</strong>
-                  <span className="block font-mono text-[11px] text-emerald-700">
-                    {selectedProduct.geo.lat}, {selectedProduct.geo.lng}
+              {/* Sub-Tabs: 1. Full Timeline Inspection, 2. Certification Form */}
+              <div className="mt-4 flex flex-wrap gap-2 p-1.5 bg-slate-100 rounded-2xl border border-slate-200">
+                <button
+                  type="button"
+                  onClick={() => setAuditViewTab('timeline')}
+                  className={`flex-1 min-w-[200px] py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 ${
+                    auditViewTab === 'timeline'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-white'
+                  }`}
+                >
+                  <Layers className="w-4 h-4" aria-hidden="true" />
+                  <span>
+                    1. 🔍 ຂະບວນການຜະລິດ: ຕົ້ນນ້ຳ & ກາງນ້ຳ ({selectedProduct.checkpoints.length}{' '}
+                    ຂັ້ນຕອນ)
                   </span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">ຂັ້ນຕອນການຜະລິດ (Timeline):</span>
-                  <strong className="text-slate-900">
-                    {selectedProduct.checkpoints.length} ຂັ້ນຕອນ (Steps)
-                  </strong>
-                </div>
-                <div>
-                  <span className="text-slate-500 block">ລະຫັດ IPFS ຕົ້ນນ້ຳ (Origin CID):</span>
-                  <code className="text-emerald-700 font-mono break-all">
-                    {selectedProduct.originIpfsHash.slice(0, 20)}...
-                  </code>
-                </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAuditViewTab('form')}
+                  className={`flex-1 min-w-[200px] py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 ${
+                    auditViewTab === 'form'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-slate-700 hover:bg-white'
+                  }`}
+                >
+                  <Award className="w-4 h-4" aria-hidden="true" />
+                  <span>2. ✍️ ອອກໃບຢັ້ງຢືນມາດຕະຖານ (Issue Certificate)</span>
+                </button>
               </div>
 
-              <form onSubmit={handleCertifyOnChain} className="mt-5 space-y-4">
-                <div>
-                  <label htmlFor="cert-standard" className="block text-xs font-bold text-slate-700 mb-1">
-                    ມາດຕະຖານທີ່ໃຫ້ການຢັ້ງຢືນ (Certification Standard) *
-                  </label>
-                  <select
-                    id="cert-standard"
-                    value={certStandard}
-                    onChange={(e) => setCertStandard(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                  >
-                    <option value="100% Verified Lao Organic & GI (ມາດຕະຖານກະສິກຳອິນຊີ & ຖິ່ນກຳເນີດ GI)">
-                      100% Verified Lao Organic & GI (ມາດຕະຖານກະສິກຳອິນຊີ & ຖິ່ນກຳເນີດ GI)
-                    </option>
-                    <option value="Lao National Good Agricultural Practices (ມາດຕະຖານກະສິກຳດີທີ່ເໝາະສົມ Lao GAP)">
-                      Lao National GAP & Organic (ມາດຕະຖານກະສິກຳອິນຊີແຫ່ງຊາດ)
-                    </option>
-                    <option value="100% Verified Lao Handwoven Silk GI (ມາດຕະຖານຜ້າໄໝທໍມື ແລະ ຍ້ອມສີທຳມະຊາດ)">
-                      Lao Handwoven Silk GI (ກາໝາຍຮັບຮອງຜ້າໄໝທໍມືແຫ່ງຊາດ)
-                    </option>
-                  </select>
-                </div>
+              {/* ===================================================================
+                  TAB 1: FULL UPSTREAM & MIDSTREAM AUDIT EVIDENCE TIMELINE
+                 =================================================================== */}
+              {auditViewTab === 'timeline' && (
+                <div className="mt-5 space-y-6">
+                  {/* Part 1: Upstream Farm / Artisan Origin Card */}
+                  <div className="p-5 rounded-2xl border-2 border-emerald-500/30 bg-emerald-50/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-extrabold bg-emerald-600 text-white">
+                        <Sprout className="w-3.5 h-3.5" aria-hidden="true" />
+                        🌱 ຕົ້ນນ້ຳ: ຂໍ້ມູນແຫຼ່ງປູກ/ສວນ (Upstream Origin Farm)
+                      </span>
+                      <span className="text-xs font-mono text-emerald-900 font-bold">
+                        ລັອດ #{selectedProduct.tokenId}
+                      </span>
+                    </div>
 
-                <div>
-                  <label htmlFor="certifier-org" className="block text-xs font-bold text-slate-700 mb-1">
-                    ໜ່ວຍງານຜູ້ອອກໃບຢັ້ງຢືນ (Certifying Authority) *
-                  </label>
-                  <input
-                    id="certifier-org"
-                    type="text"
-                    required
-                    value={certifierOrg}
-                    onChange={(e) => setCertifierOrg(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="inspector-note" className="block text-xs font-bold text-slate-700 mb-1">
-                    ບັນທຶກຜົນການກວດສອບຄຸນນະພາບ (Inspection Notes) *
-                  </label>
-                  <textarea
-                    id="inspector-note"
-                    rows={2}
-                    required
-                    value={inspectorNote}
-                    onChange={(e) => setInspectorNote(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900"
-                  />
-                </div>
-
-                {/* Upload PDF Certificate to IPFS */}
-                <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-2.5">
-                      <div className="p-2 rounded-xl bg-emerald-600 text-white shrink-0">
-                        <FileText className="w-4 h-4" aria-hidden="true" />
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-start pt-1">
+                      <div className="sm:col-span-4">
+                        <img
+                          src={selectedProduct.heroImageUrl}
+                          alt={selectedProduct.productName}
+                          width={300}
+                          height={200}
+                          className="w-full h-32 object-cover rounded-xl border border-emerald-200 shadow-sm"
+                        />
+                        <a
+                          href={resolveIpfsUrl(selectedProduct.originIpfsHash)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-mono text-emerald-800 hover:underline mt-1.5 truncate w-full"
+                        >
+                          <ExternalLink className="w-3 h-3 shrink-0" aria-hidden="true" />
+                          IPFS: {selectedProduct.originIpfsHash.slice(0, 16)}...
+                        </a>
                       </div>
-                      <div>
-                        <p className="text-xs font-bold text-slate-900">
-                          ໄຟລ໌ໃບຢັ້ງຢືນ PDF / ຮູບພາບ (Certificate Document on IPFS)
-                        </p>
-                        <p className="text-[11px] text-slate-600 mt-0.5">
-                          ໄຟລ໌ປັດຈຸບັນ: <strong className="font-mono text-emerald-800">{pdfFileName}</strong>
-                        </p>
+
+                      <div className="sm:col-span-8 space-y-2 text-xs">
+                        <div className="bg-white p-3 rounded-xl border border-emerald-200/80 space-y-1.5">
+                          <p className="text-slate-600">
+                            ຊື່ຊາວສວນ/ຊ່າງຕໍ່າຫູກ:{' '}
+                            <strong className="text-slate-900 font-bold">
+                              {selectedProduct.producerName}
+                            </strong>
+                          </p>
+                          <p className="text-slate-600 flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-hidden="true" />
+                            <span>{selectedProduct.geo.locationName}</span>
+                          </p>
+                          <p className="text-emerald-800 font-mono font-bold">
+                            ພິກັດ GPS: {selectedProduct.geo.lat}, {selectedProduct.geo.lng}
+                          </p>
+                        </div>
+
+                        {/* Batch Agriculture Metrics */}
+                        {selectedProduct.batchData && (
+                          <div className="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-xl border border-emerald-200/80 text-[11px]">
+                            <div>
+                              <span className="text-slate-500 block">ນ້ຳໜັກຜົນຜະລິດສົດ:</span>
+                              <strong className="text-slate-900 text-xs">
+                                {selectedProduct.batchData.freshWeightKg.toLocaleString()} kg
+                              </strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block">ໂຄວຕາບັນຈຸສູງສຸດ:</span>
+                              <strong className="text-emerald-800 text-xs">
+                                {selectedProduct.batchData.plannedBagsCount.toLocaleString()} ຖົງ
+                              </strong>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block">ສາຍພັນ (Variety):</span>
+                              <span className="text-slate-800 font-semibold">
+                                {selectedProduct.batchData.variety}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block">ລະດັບຄວາມສູງ (Elevation):</span>
+                              <span className="text-slate-800 font-semibold">
+                                {selectedProduct.batchData.elevationMeters}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Handicraft Metrics */}
+                        {selectedProduct.craftData && (
+                          <div className="bg-white p-2.5 rounded-xl border border-emerald-200/80 text-[11px] space-y-1">
+                            <p className="text-slate-700">
+                              ຊ່າງຕໍ່າຫູກ: <strong>{selectedProduct.craftData.weaverName}</strong> (
+                              {selectedProduct.craftData.villageName})
+                            </p>
+                            <p className="text-slate-700">
+                              ເສັ້ນໄໝ & ສີຍ້ອມ:{' '}
+                              <strong>
+                                {selectedProduct.craftData.silkType} •{' '}
+                                {selectedProduct.craftData.naturalDye}
+                              </strong>
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex flex-wrap items-center justify-between text-[11px] font-mono text-slate-500 pt-1">
+                          <span>Signer: {selectedProduct.producerAddress.slice(0, 8)}...</span>
+                          {selectedProduct.originTxHash && (
+                            <a
+                              href={getExplorerTxUrl(selectedProduct.originTxHash)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-emerald-700 hover:underline flex items-center gap-1 font-bold"
+                            >
+                              Tx: {selectedProduct.originTxHash.slice(0, 10)}... ↗
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <label
-                        htmlFor="cert-pdf-upload"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-emerald-300 text-emerald-900 hover:bg-emerald-100 cursor-pointer transition shadow-sm"
-                      >
-                        <Upload className="w-3.5 h-3.5" aria-hidden="true" />
-                        1. ເລືອກໄຟລ໌ PDF/ຮູບ
-                      </label>
-                      <input
-                        id="cert-pdf-upload"
-                        type="file"
-                        accept=".pdf,image/*"
-                        onChange={handlePdfUploadChange}
-                        className="sr-only"
-                      />
+                  </div>
 
-                      <button
-                        type="button"
-                        disabled={isUploadingCertIpfs}
-                        onClick={handlePreUploadCertToPinata}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60 transition"
-                      >
-                        <Upload className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
-                        {isUploadingCertIpfs
-                          ? 'ກຳລັງອັບໂຫຼດ...'
-                          : '2. ອັບໂຫຼດຂຶ້ນ Pinata (Get CID)'}
-                      </button>
+                  {/* Part 2: Midstream Checkpoint Timeline */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+                        <Factory className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                        🏭 ກາງນ້ຳ: ຂັ້ນຕອນການແປຮູບເທິງ Blockchain (Midstream Processing Timeline)
+                      </h3>
+                      <span className="text-xs font-bold text-slate-500">
+                        {selectedProduct.checkpoints.length} ຂັ້ນຕອນທີ່ບັນທຶກແລ້ວ
+                      </span>
                     </div>
+
+                    <ol className="relative border-s-2 border-emerald-400 ms-3 space-y-4 pt-1">
+                      {selectedProduct.checkpoints.map((cp) => (
+                        <li key={cp.stepNumber} className="ms-5">
+                          <span className="absolute -start-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] font-bold text-white ring-4 ring-white">
+                            {cp.stepNumber}
+                          </span>
+
+                          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 hover:bg-slate-100/70 transition shadow-sm space-y-2.5">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-900">
+                                  ຂັ້ນຕອນ #{cp.stepNumber}
+                                </span>
+                                <h4 className="text-sm font-bold text-slate-900">{cp.title}</h4>
+                              </div>
+                              <time className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
+                                <Clock className="w-3 h-3" aria-hidden="true" />
+                                {cp.timestamp}
+                              </time>
+                            </div>
+
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                              {cp.description}
+                            </p>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center pt-1">
+                              <div className="sm:col-span-4">
+                                <img
+                                  src={cp.imageUrl}
+                                  alt={cp.title}
+                                  width={240}
+                                  height={150}
+                                  className="w-full h-24 object-cover rounded-xl border border-slate-200"
+                                />
+                              </div>
+                              <div className="sm:col-span-8 space-y-1.5 text-xs">
+                                <p className="text-slate-700">
+                                  ຜູ້ດຳເນີນການ:{' '}
+                                  <strong className="text-slate-900">{cp.actorName}</strong>
+                                </p>
+                                <p className="text-slate-600 flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-emerald-600 shrink-0" aria-hidden="true" />
+                                  <span className="truncate">{cp.geo.locationName}</span>
+                                </p>
+                                <p className="text-slate-500 font-mono text-[11px]">
+                                  GPS: {cp.geo.lat}, {cp.geo.lng}
+                                </p>
+                                {cp.extraSpecs && (
+                                  <div className="flex flex-wrap gap-1 pt-1">
+                                    {Object.entries(cp.extraSpecs).map(([k, v]) => (
+                                      <span
+                                        key={k}
+                                        className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] text-slate-700 font-semibold"
+                                      >
+                                        {k}: {v}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-[11px] font-mono text-slate-500 pt-1 border-t border-slate-200/60">
+                              <span>Actor: {cp.actorAddress.slice(0, 8)}...</span>
+                              {cp.txHash && (
+                                <a
+                                  href={getExplorerTxUrl(cp.txHash)}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-emerald-700 hover:underline flex items-center gap-1 font-bold"
+                                >
+                                  Tx: {cp.txHash.slice(0, 10)}... ↗
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {/* Proceed to Certification Form Action Button */}
+                  <div className="pt-4 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <p className="text-xs text-slate-600">
+                      ກວດສອບຫຼັກຖານຕົ້ນນ້ຳ ແລະ ກາງນ້ຳຄົບຖ້ວນແລ້ວ ພ້ອມອອກໃບຢັ້ງຢືນມາດຕະຖານ
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAuditViewTab('form')}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-md"
+                    >
+                      <Award className="w-4 h-4" aria-hidden="true" />
+                      ✍️ ໄປໜ້າອອກໃບຢັ້ງຢືນ (Proceed to Issue Certificate) ➡️
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ===================================================================
+                  TAB 2: ISSUE CERTIFICATION FORM
+                 =================================================================== */}
+              {auditViewTab === 'form' && (
+                <form onSubmit={handleCertifyOnChain} className="mt-5 space-y-4">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                    <span className="text-xs font-bold text-slate-700">
+                      ກະລຸນາກວດສອບມາດຕະຖານ ແລະ ແນບໄຟລ໌ໃບຢັ້ງຢືນ PDF:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAuditViewTab('timeline')}
+                      className="text-xs font-bold text-emerald-700 hover:underline inline-flex items-center gap-1"
+                    >
+                      ⬅️ ກວດສອບຂະບວນການຜະລິດຄືນ
+                    </button>
                   </div>
 
                   <div>
-                    <label htmlFor="cert-ipfs-cid" className="block text-[11px] font-semibold text-slate-700 mb-1">
-                      ລະຫັດ IPFS CID ຂອງໃບຢັ້ງຢືນ (ຈະສ້າງອັດຕະໂນມັດຖ້າປະຫວ່າງໄວ້):
+                    <label htmlFor="cert-standard" className="block text-xs font-bold text-slate-700 mb-1">
+                      ມາດຕະຖານທີ່ໃຫ້ການຢັ້ງຢືນ (Certification Standard) *
+                    </label>
+                    <select
+                      id="cert-standard"
+                      value={certStandard}
+                      onChange={(e) => setCertStandard(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+                    >
+                      <option value="100% Verified Lao Organic & GI (ມາດຕະຖານກະສິກຳອິນຊີ & ຖິ່ນກຳເນີດ GI)">
+                        100% Verified Lao Organic & GI (ມາດຕະຖານກະສິກຳອິນຊີ & ຖິ່ນກຳເນີດ GI)
+                      </option>
+                      <option value="Lao National Good Agricultural Practices (ມາດຕະຖານກະສິກຳດີທີ່ເໝາະສົມ Lao GAP)">
+                        Lao National GAP & Organic (ມາດຕະຖານກະສິກຳອິນຊີແຫ່ງຊາດ)
+                      </option>
+                      <option value="100% Verified Lao Handwoven Silk GI (ມາດຕະຖານຜ້າໄໝທໍມື ແລະ ຍ້ອມສີທຳມະຊາດ)">
+                        Lao Handwoven Silk GI (ກາໝາຍຮັບຮອງຜ້າໄໝທໍມືແຫ່ງຊາດ)
+                      </option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="certifier-org" className="block text-xs font-bold text-slate-700 mb-1">
+                      ໜ່ວຍງານຜູ້ອອກໃບຢັ້ງຢືນ (Certifying Authority) *
                     </label>
                     <input
-                      id="cert-ipfs-cid"
+                      id="certifier-org"
                       type="text"
-                      autocorrect="off"
-                      autocapitalize="off"
-                      spellCheck={false}
-                      value={certIpfsHashInput}
-                      onChange={(e) => setCertIpfsHashInput(e.target.value)}
-                      placeholder="QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"
-                      className="w-full rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs font-mono text-emerald-950"
+                      required
+                      value={certifierOrg}
+                      onChange={(e) => setCertifierOrg(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
+                    >
+                    </input>
+                  </div>
+
+                  <div>
+                    <label htmlFor="inspector-note" className="block text-xs font-bold text-slate-700 mb-1">
+                      ບັນທຶກຜົນການກວດສອບຄຸນນະພາບ (Inspection Notes) *
+                    </label>
+                    <textarea
+                      id="inspector-note"
+                      rows={2}
+                      required
+                      value={inspectorNote}
+                      onChange={(e) => setInspectorNote(e.target.value)}
+                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm text-slate-900"
                     />
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={isCertifying}
-                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm sm:text-base font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-md"
-                >
-                  {isCertifying ? (
-                    <>
-                      <RefreshCw className="w-5 h-5 animate-spin" aria-hidden="true" />
-                      ກຳລັງບັນທຶກໃບຢັ້ງຢືນລົງ LAB Chain...
-                    </>
-                  ) : (
-                    <>
-                      <Award className="w-5 h-5" aria-hidden="true" />
-                      ຢືນຢັນມາດຕະຖານລົງ Blockchain (Approve & Certify On-Chain)
-                    </>
-                  )}
-                </button>
-              </form>
+                  {/* Upload PDF Certificate to IPFS */}
+                  <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-2.5">
+                        <div className="p-2 rounded-xl bg-emerald-600 text-white shrink-0">
+                          <FileText className="w-4 h-4" aria-hidden="true" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-slate-900">
+                            ໄຟລ໌ໃບຢັ້ງຢືນ PDF / ຮູບພາບ (Certificate Document on IPFS)
+                          </p>
+                          <p className="text-[11px] text-slate-600 mt-0.5">
+                            ໄຟລ໌ປັດຈຸບັນ: <strong className="font-mono text-emerald-800">{pdfFileName}</strong>
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <label
+                          htmlFor="cert-pdf-upload"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-emerald-300 text-emerald-900 hover:bg-emerald-100 cursor-pointer transition shadow-sm"
+                        >
+                          <Upload className="w-3.5 h-3.5" aria-hidden="true" />
+                          1. ເລືອກໄຟລ໌ PDF/ຮູບ
+                        </label>
+                        <input
+                          id="cert-pdf-upload"
+                          type="file"
+                          accept=".pdf,image/*"
+                          onChange={handlePdfUploadChange}
+                          className="sr-only"
+                        />
+
+                        <button
+                          type="button"
+                          disabled={isUploadingCertIpfs}
+                          onClick={handlePreUploadCertToPinata}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-60 transition"
+                        >
+                          <Upload className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
+                          {isUploadingCertIpfs
+                            ? 'ກຳລັງອັບໂຫຼດ...'
+                            : '2. ອັບໂຫຼດຂຶ້ນ Pinata (Get CID)'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="cert-ipfs-cid" className="block text-[11px] font-semibold text-slate-700 mb-1">
+                        ລະຫັດ IPFS CID ຂອງໃບຢັ້ງຢືນ (ຈະສ້າງອັດຕະໂນມັດຖ້າປະຫວ່າງໄວ້):
+                      </label>
+                      <input
+                        id="cert-ipfs-cid"
+                        type="text"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellCheck={false}
+                        value={certIpfsHashInput}
+                        onChange={(e) => setCertIpfsHashInput(e.target.value)}
+                        placeholder="QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco"
+                        className="w-full rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs font-mono text-emerald-950"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isCertifying}
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm sm:text-base font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-md"
+                  >
+                    {isCertifying ? (
+                      <>
+                        <RefreshCw className="w-5 h-5 animate-spin" aria-hidden="true" />
+                        ກຳລັງບັນທຶກໃບຢັ້ງຢືນລົງ LAB Chain...
+                      </>
+                    ) : (
+                      <>
+                        <Award className="w-5 h-5" aria-hidden="true" />
+                        ຢືນຢັນມາດຕະຖານລົງ Blockchain (Approve & Certify On-Chain)
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
 
               {/* On-Chain Certificate Status Box */}
               {selectedProduct.certification.isCertified && (
