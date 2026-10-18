@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Noto Sans Lao', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  button:focus-visible,
+  a:focus-visible {
+    outline: 3px solid #059669;
+    outline-offset: 2px;
+  }
+
+  /* Style native dialog backdrop */
+  dialog::backdrop {
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+  }
+
+  /* Non-intrusive validation styling per modern-web-guidance forms guide */
+  input:invalid:user-invalid,
+  textarea:invalid:user-invalid,
+  select:invalid:user-invalid {
+    border-color: #ef4444;
+    background-color: #fef2f2;
+  }
+}
+
+/* Print-friendly styles for QR Code Label printing */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-qr-area,
+  #printable-qr-area * {
+    visibility: visible;
+  }
+  #printable-qr-area {
+    position: fixed;
+    inset: 0;
+    background: white;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+  }
+}

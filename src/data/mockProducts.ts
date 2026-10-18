@@ -1,0 +1,383 @@
+import { TraceableProduct } from '../types/traceability';
+
+export const INITIAL_TRACEABLE_PRODUCTS: TraceableProduct[] = [
+  {
+    tokenId: 1,
+    category: 'batch',
+    productName: 'ກາເຟອາຣາບິກ້າ ພູພຽງບໍລະເວນ (Paksong Single-Origin Arabica)',
+    producerName: 'ກຸ່ມຊາວສວນກາເຟອິນຊີ ບ້ານຫຼັກ 40 (Paksong Organic Farmers Group)',
+    producerAddress: '0x71C95911E9a5D330f4D621842EC243EE13432921',
+    originIpfsHash: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
+    createdAt: '2026-10-12 07:35:10',
+    originTxHash: '0x94a8b7c6e5d4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a1',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=1000&q=80',
+    geo: {
+      lat: 15.1764,
+      lng: 106.2338,
+      locationName: 'ເມືອງປາກຊອງ ແຂວງຈຳປາສັກ (Paksong, Bolaven Plateau 1,280m)',
+      capturedAt: '2026-10-12 07:30:00',
+    },
+    batchData: {
+      cropType: 'ກາເຟອາຣາບິກ້າ (Arabica Coffee)',
+      variety: 'Typica & Catimor (Bourbon Lineage)',
+      elevationMeters: '1,280m above sea level (ດິນພູໄຟບໍລະເວນ)',
+      freshWeightKg: 500,
+      plannedBagsCount: 800,
+      bagWeightGrams: 250,
+    },
+    checkpoints: [
+      {
+        stepNumber: 1,
+        stageType: 'origin',
+        title: '1. ເກັບກ່ຽວໝາກກາເຟສຸກຢູ່ສວນ (Harvested at Origin Farm)',
+        description:
+          'ເກັບກ່ຽວໝາກກາເຟສຸກສີແດງ 100% ດ້ວຍມື ຈາກສວນອິນຊີເມືອງປາກຊອງ ນ້ຳໜັກສົດ 500 kg (ໂຄວຕາສູງສຸດ 1,000 ຖົງ). Hand-picked 100% ripe red coffee cherries in Paksong.',
+        actorName: 'ລຸງສົມພອນ ພົມມາ (Paksong Farmer)',
+        actorRole: 'Producer (ຊາວສວນຕົ້ນນ້ຳ)',
+        actorAddress: '0x71C95911E9a5D330f4D621842EC243EE13432921',
+        timestamp: '2026-10-12 07:35:10',
+        txHash: '0x94a8b7c6e5d4f3a2b1c0d9e8f7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a1',
+        ipfsHash: 'QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco',
+        imageUrl:
+          'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 15.1764,
+          lng: 106.2338,
+          locationName: 'ບ້ານຫຼັກ 40 ເມືອງປາກຊອງ ແຂວງຈຳປາສັກ (Paksong, Champasak)',
+          capturedAt: '2026-10-12 07:30:00',
+        },
+        extraSpecs: {
+          Category: 'AGRICULTURE',
+          'Raw Weight': '500 kg',
+          'Batch Quota': '800 Bags (Max 1,000)',
+        },
+      },
+      {
+        stepNumber: 2,
+        stageType: 'processing',
+        title: '2. ສີປຽກ ແລະ ຕາກແຫ້ງ (Washed Process & Sun-Dried)',
+        description:
+          'ລ້າງດ້ວຍນ້ຳແຮ່ທຳມະຊາດ ໝັກ 36 ຊົ່ວໂມງ ແລະ ຕາກເທິງຮ້ານຍົກສູງ 14 ມື້ ຈົນความชื้นເຫຼືອ 11.2%. Mountain spring washed & raised-bed dried to 11.2% moisture.',
+        actorName: 'ສະຫະກອນກາເຟພູພຽງບໍລະເວນ (Bolaven Wet Mill Co-op)',
+        actorRole: 'Processor (ໂຮງແປຮູບ)',
+        actorAddress: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+        timestamp: '2026-10-14 14:20:05',
+        txHash: '0x82b1c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3',
+        ipfsHash: 'QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG',
+        imageUrl:
+          'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 15.1821,
+          lng: 106.2412,
+          locationName: 'ໂຮງສີກາເຟປາກຊອງ (Paksong Processing Station)',
+          capturedAt: '2026-10-14 14:15:00',
+        },
+        extraSpecs: {
+          Process: 'Fully Washed',
+          Moisture: '11.2%',
+        },
+      },
+      {
+        stepNumber: 3,
+        stageType: 'roasting_dyeing',
+        title: '3. ຂົ້ວລະດັບກາງ & ບັນຈຸຖົງ (Medium Roast & Packaging)',
+        description:
+          'ຂົ້ວລະດັບກາງ (Medium Roast) ຫອມກິ່ນດອກໄມ້ປ່າ ແລະ ຊັອກໂກແລັດ ພ້ອມຕິດລະຫັດກັນປອມ Unit #1 - #800. Artisan Medium Roast, Cupping Score 86.5.',
+        actorName: 'ໂຮງຂົ້ວກາເຟວຽງຈັນ (Vientiane Specialty Roastery)',
+        actorRole: 'Processor (ໂຮງຂົ້ວ)',
+        actorAddress: '0x90F79bf6EB2c4f870365E785982E1f101E93b906',
+        timestamp: '2026-10-16 11:05:40',
+        txHash: '0x77c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0c9',
+        ipfsHash: 'QmZTR5bcpQD7cFgTorqxZDYaew1Wqgfbd2ud9QqGPAkK2V',
+        imageUrl:
+          'https://images.unsplash.com/photo-1511920170033-f8396924c348?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 17.9757,
+          lng: 102.6331,
+          locationName: 'ນະຄອນຫຼວງວຽງຈັນ (Vientiane Capital)',
+          capturedAt: '2026-10-16 10:55:00',
+        },
+        extraSpecs: {
+          Roast: 'Medium Roast',
+          'Cupping Score': '86.5 pts',
+        },
+      },
+      {
+        stepNumber: 4,
+        stageType: 'qc',
+        title: '4. ຢືນຢັນມາດຕະຖານ ອິນຊີ & GI (Official Organic / GI Certified)',
+        description:
+          'ຜ່ານການກວດສອບມາດຕະຖານກະສິກຳອິນຊີລາວ ແລະ ຖິ່ນກຳເນີດ GI ປາກຊອງ ເທິງ Blockchain (isCertified = true).',
+        actorName: 'ກົມກະສິກຳ (Ministry of Agriculture & Forestry - DOA)',
+        actorRole: 'Certifier (ຜູ້ກວດສອບມາດຕະຖານ)',
+        actorAddress: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
+        timestamp: '2026-10-17 09:15:00',
+        txHash: '0x55a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1',
+        ipfsHash: 'QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB',
+        imageUrl:
+          'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 17.9689,
+          lng: 102.6144,
+          locationName: 'ກະຊວງກະສິກຳ ແລະ ປ່າໄມ້ (Ministry of Agriculture / GI Office)',
+          capturedAt: '2026-10-17 09:15:00',
+        },
+        extraSpecs: {
+          Status: 'Verified Organic & GI',
+          OnChain: 'isCertified = true',
+        },
+      },
+    ],
+    certification: {
+      isCertified: true,
+      certIpfsHash: 'QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB',
+      certPdfUrl: 'https://gateway.pinata.cloud/ipfs/QmPZ9gcCEpqKTo6aq61g2nXGUhM4iCL3ewB6LDXZCtioEB',
+      certStandard: '100% Verified Lao Organic & GI (ກາເຟອິນຊີ GI ເມືອງປາກຊອງ)',
+      certifierOrganization: 'ກົມກະສິກຳ ກະຊວງກະສິກຳ ແລະ ປ່າໄມ້ (DOA Laos & GI Board)',
+      certifierAddress: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
+      certifiedAt: '2026-10-17 09:15:00',
+      txHash: '0x55a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1',
+      inspectorNote:
+        'ກວດສອບສວນກາເຟປອດສານເຄມີ 100% ແລະ ຢູ່ໃນເຂດ GI ພູພຽງບໍລະເວນ ເມືອງປາກຊອງ ແທ້ຈິງ (100% Chemical-Free & Authentic Paksong GI Origin).',
+    },
+    quota: {
+      tokenId: 1,
+      rawWeightKg: 500,
+      yieldRatioPercent: 80,
+      maxNetWeightKg: 400,
+      bagWeightGrams: 250,
+      maxAllowedBags: 1000,
+      requestedBags: 800,
+      isWithinQuota: true,
+      generatedUnits: [
+        {
+          unitCode: 'UNIT #1 (LT-01-BAG-0001)',
+          pinCode: '884920',
+          qrVerifyUrl: '/verify/1?unit=1',
+          isClaimed: false,
+        },
+        {
+          unitCode: 'UNIT #2 (LT-01-BAG-0002)',
+          pinCode: '551209',
+          qrVerifyUrl: '/verify/1?unit=2',
+          isClaimed: false,
+        },
+        {
+          unitCode: 'UNIT #3 (LT-01-BAG-0003)',
+          pinCode: '990112',
+          qrVerifyUrl: '/verify/1?unit=3',
+          isClaimed: true,
+          claimedAt: '2026-10-18 09:12:33',
+          claimedByNote: 'ຖືກໃຊ້ໄປແລ້ວ / Already Claimed',
+        },
+      ],
+    },
+  },
+  {
+    tokenId: 2,
+    category: 'craft',
+    productName: 'ຜ້າໄໝລາວຕໍ່າດ້ວຍມື ຍ້ອມຄາມທຳມະຊາດ (Luang Prabang Handwoven Silk)',
+    producerName: 'ແມ່ຄູຄຳແພງ ແກ້ວມະນີ (ບ້ານໂພນງາມ ຫຼວງພະບາງ)',
+    producerAddress: '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f',
+    originIpfsHash: 'QmT5NvUtoM5nWFfrQdVrFtvGfKFmG7AHE8P34isapyhCxX',
+    createdAt: '2026-10-10 09:00:00',
+    originTxHash: '0x31f4e5d6c7b8a9f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1000&q=80',
+    geo: {
+      lat: 19.8856,
+      lng: 102.1347,
+      locationName: 'ບ້ານໂພນງາມ ແຂວງຫຼວງພະບາງ (Phon Ngam Village, Luang Prabang)',
+      capturedAt: '2026-10-10 08:50:00',
+    },
+    craftData: {
+      weaverName: 'ແມ່ຄູຄຳແພງ ແກ້ວມະນີ (Master Weaver Khamphaeng)',
+      villageName: 'ບ້ານໂພນງາມ ແຂວງຫຼວງພະບາງ (Luang Prabang)',
+      silkType: 'ໄໝນ້ອຍສາວມືພື້ນເມືອງ 100% (100% Native Hand-Reeled Silk)',
+      naturalDye: 'ຄາມທຳມະຊາດ & ຄັ່ງປ່າ (Natural Indigo & Lac Dye)',
+      ancientPattern: 'ລາຍນາກໂຂງບູຮານ (Ancient Mekong Naga Motif)',
+      weavingDays: 21,
+      nfcUid: 'NFC-UID-04:A2:8F:12:9C:50:80',
+    },
+    checkpoints: [
+      {
+        stepNumber: 1,
+        stageType: 'origin',
+        title: '1. ສາວໄໝ ແລະ ຂຶ້ນກີ່ຕໍ່າຫູກ (Handwoven by Artisan)',
+        description:
+          'ສາວເສັ້ນໄໝນ້ອຍດ້ວຍມືແບບດັ້ງເດີມ ສິນຄ້າຫັດຖະກຳຜືນດຽວໃນໂລກ (Unique Item: maxUnits = 1).',
+        actorName: 'ແມ່ຄູຄຳແພງ ແກ້ວມະນີ',
+        actorRole: 'Producer (ຊ່າງຕໍ່າຫູກ)',
+        actorAddress: '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f',
+        timestamp: '2026-10-10 09:00:00',
+        txHash: '0x31f4e5d6c7b8a9f0e1d2c3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4',
+        ipfsHash: 'QmT5NvUtoM5nWFfrQdVrFtvGfKFmG7AHE8P34isapyhCxX',
+        imageUrl:
+          'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 19.8856,
+          lng: 102.1347,
+          locationName: 'ບ້ານໂພນງາມ ແຂວງຫຼວງພະບາງ (Luang Prabang)',
+          capturedAt: '2026-10-10 08:50:00',
+        },
+        extraSpecs: {
+          Category: 'HANDICRAFT',
+          Edition: '1 of 1 Unique Piece',
+        },
+      },
+      {
+        stepNumber: 2,
+        stageType: 'roasting_dyeing',
+        title: '2. ຍ້ອມສີຄາມທຳມະຊາດ & ຕໍ່າລາຍນາກ (Natural Dyeing & Weaving)',
+        description:
+          'ຍ້ອມສີຄາມທຳມະຊາດ 12 ຮອບ ແລະ ຕໍ່າດ້ວຍກີ່ບູຮານໃຊ້ເວລາ 21 ມື້. 12-bath natural indigo dyeing and 21 days of handloom weaving.',
+        actorName: 'ກຸ່ມຫັດຖະກຳຜ້າໄໝບ້ານໂພນງາມ',
+        actorRole: 'Processor (ກຸ່ມຊ່າງຍ້ອມສີ)',
+        actorAddress: '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f',
+        timestamp: '2026-10-13 15:10:00',
+        txHash: '0x42a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5',
+        ipfsHash: 'QmWmyoMoctfbAaiEs2G46gpeUmhqFRDW6KWo64y5r581Vz',
+        imageUrl:
+          'https://images.unsplash.com/photo-1584992236310-6edddc08acff?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 19.8861,
+          lng: 102.1352,
+          locationName: 'ບ້ານໂພນງາມ ແຂວງຫຼວງພະບາງ',
+          capturedAt: '2026-10-13 15:00:00',
+        },
+        extraSpecs: {
+          Dye: 'Natural Indigo & Lac',
+          'NFC Tag': '04:A2:8F:12:9C:50:80',
+        },
+      },
+      {
+        stepNumber: 3,
+        stageType: 'qc',
+        title: '3. ຢືນຢັນມາດຕະຖານ ຜ້າໄໝລາວ GI (Official Lao Silk GI Certified)',
+        description:
+          'ຮັບຮອງຜ້າໄໝຕໍ່າດ້ວຍມືແທ້ 100% ຍ້ອມສີທຳມະຊາດປອດສານເຄມີ ເອກະລັກມໍລະດົກຫຼວງພະບາງ.',
+        actorName: 'ສະມາຄົມຫັດຖະກຳລາວ & ກົມຊັບສິນທາງປັນຍາ (Lao Handicraft GI Board)',
+        actorRole: 'Certifier (ຜູ້ກວດສອບມາດຕະຖານ)',
+        actorAddress: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
+        timestamp: '2026-10-16 17:30:00',
+        txHash: '0x53b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6',
+        ipfsHash: 'QmNLei78zWmzUdbeRB3CiUfAizWUrbeeZh5K1rhAQKCh51',
+        imageUrl:
+          'https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 19.8892,
+          lng: 102.1381,
+          locationName: 'ສູນຫັດຖະກຳແຂວງຫຼວງພະບາງ (Luang Prabang Craft Center)',
+          capturedAt: '2026-10-16 17:20:00',
+        },
+        extraSpecs: {
+          Status: 'Verified Lao Silk GI',
+          Unit: '1 / 1',
+        },
+      },
+    ],
+    certification: {
+      isCertified: true,
+      certIpfsHash: 'QmNLei78zWmzUdbeRB3CiUfAizWUrbeeZh5K1rhAQKCh51',
+      certPdfUrl: 'https://gateway.pinata.cloud/ipfs/QmNLei78zWmzUdbeRB3CiUfAizWUrbeeZh5K1rhAQKCh51',
+      certStandard: '100% Verified Lao Handwoven Silk GI (ຜ້າໄໝລາວ GI ແທ້ 100%)',
+      certifierOrganization: 'ສະມາຄົມຫັດຖະກຳລາວ & ກົມຊັບສິນທາງປັນຍາ (Lao Handicraft Association)',
+      certifierAddress: '0x9965507D1a55bcC2695C58ba16FB37d819B0A4dc',
+      certifiedAt: '2026-10-17 13:20:00',
+      txHash: '0x64c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7',
+      inspectorNote:
+        'ຮັບຮອງຜ້າໄໝຕໍ່າດ້ວຍມືແທ້ 100% ຍ້ອມສີທຳມະຊາດປອດສານເຄມີ (Verified 100% handwoven natural-dyed Lao silk).',
+    },
+  },
+  {
+    tokenId: 3,
+    category: 'batch',
+    productName: 'ຊາອັດສຳບູຮານ 400 ປີ ແຂວງຜົ້ງສາລີ (Phongsaly 400-Year Ancient Forest Tea)',
+    producerName: 'ກຸ່ມຊາວສວນຊາບູຮານ ບ້ານກໍແໝ່ງ ແຂວງຜົ້ງສາລີ (Komen Tea Farmers)',
+    producerAddress: '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720',
+    originIpfsHash: 'QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL',
+    createdAt: '2026-10-17 08:15:00',
+    originTxHash: '0x71d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8',
+    heroImageUrl:
+      'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?auto=format&fit=crop&w=1000&q=80',
+    geo: {
+      lat: 21.6833,
+      lng: 102.1058,
+      locationName: 'ປ່າຊາບູຮານ ບ້ານກໍແໝ່ງ ແຂວງຜົ້ງສາລີ (Phongsaly 1,620m)',
+      capturedAt: '2026-10-17 08:00:00',
+    },
+    batchData: {
+      cropType: 'ຊາອັດສຳປ່າບູຮານ (Ancient Forest Assam Tea)',
+      variety: 'Camellia sinensis var. assamica (400-Year Trees)',
+      elevationMeters: '1,620m above sea level',
+      freshWeightKg: 200,
+      plannedBagsCount: 350,
+      bagWeightGrams: 100,
+    },
+    checkpoints: [
+      {
+        stepNumber: 1,
+        stageType: 'origin',
+        title: '1. ເກັບຍອດໃບຊາປ່າບູຮານ 400 ປີ (Harvested at Ancient Tea Forest)',
+        description:
+          'ເກັບຍອດໃບຊາຈາກຕົ້ນຊາປ່າອາຍຸກວ່າ 400 ປີ ຢູ່ຍອດພູຜົ້ງສາລີ ນ້ຳໜັກສົດ 200 kg (ໂຄວຕາສູງສຸດ 400 ຖົງ).',
+        actorName: 'ແມ່ແສງດາວ ວົງພະຈັນ (Phongsaly Tea Grower)',
+        actorRole: 'Producer (ຊາວສວນຕົ້ນນ້ຳ)',
+        actorAddress: '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720',
+        timestamp: '2026-10-17 08:15:00',
+        txHash: '0x71d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8',
+        ipfsHash: 'QmRgutAxd8t7oGkSm4wmeuByG6M51wcTso6cubDdQtuEfL',
+        imageUrl:
+          'https://images.unsplash.com/photo-1564890369478-c89ca6d9cde9?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 21.6833,
+          lng: 102.1058,
+          locationName: 'ບ້ານກໍແໝ່ງ ແຂວງຜົ້ງສາລີ (Komen, Phongsaly)',
+          capturedAt: '2026-10-17 08:00:00',
+        },
+        extraSpecs: {
+          Category: 'AGRICULTURE',
+          'Raw Weight': '200 kg',
+          'Batch Quota': '350 Bags (Max 400)',
+        },
+      },
+      {
+        stepNumber: 2,
+        stageType: 'processing',
+        title: '2. ຂົ້ວໃບຊາດ້ວຍໝໍ້ຂາງ ແລະ ນວດດ້ວຍມື (Pan-Fired & Hand-Rolled)',
+        description:
+          'ຂົ້ວໃບຊາສົດໃນໝໍ້ຂາງດ້ວຍຟືນໄມ້ ນວດມ້ວນໃບຊາດ້ວຍມື ແລະ ຕາກແດດອ່ອນ. Traditional wood-fired pan roasting and hand rolling.',
+        actorName: 'ກຸ່ມແປຮູບຊາຊຸມຊົນບ້ານກໍແໝ່ງ (Phongsaly Tea Co-op)',
+        actorRole: 'Processor (ໂຮງແປຮູບຊາ)',
+        actorAddress: '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720',
+        timestamp: '2026-10-18 09:30:00',
+        txHash: '0x82e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9',
+        ipfsHash: 'QmS4ustL54uo8FzR9455qaxZwuMiUhyvMcX9Ba8nUH4uVv',
+        imageUrl:
+          'https://images.unsplash.com/photo-1544787219-7f47ccb76574?auto=format&fit=crop&w=800&q=80',
+        geo: {
+          lat: 21.6845,
+          lng: 102.1072,
+          locationName: 'ບ້ານກໍແໝ່ງ ແຂວງຜົ້ງສາລີ (Phongsaly)',
+          capturedAt: '2026-10-18 09:20:00',
+        },
+        extraSpecs: {
+          Packaging: '350 Bags (100g/bag)',
+        },
+      },
+    ],
+    certification: {
+      isCertified: false,
+      certIpfsHash: '',
+      certPdfUrl: '',
+      certStandard: 'ລໍຖ້າການກວດສອບມາດຕະຖານ Lao Organic & GI (Pending Audit)',
+      certifierOrganization: 'ກົມກະສິກຳ (Department of Agriculture - DOA)',
+      certifierAddress: '',
+      certifiedAt: '',
+      txHash: '',
+      inspectorNote:
+        'ລໍຖ້າຜູ້ກວດສອບມາດຕະຖານ ອະນຸມັດໃບຢັ້ງຢືນ Organic / GI ເທິງ Blockchain (Pending Certifier Approval).',
+    },
+  },
+];
