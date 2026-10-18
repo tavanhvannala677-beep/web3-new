@@ -9,6 +9,7 @@ import {
   RotateCcw,
   Settings,
   ShieldCheck,
+  Sprout,
   Wallet,
   Zap,
 } from 'lucide-react';
@@ -31,33 +32,40 @@ import {
   callGrantRolesOnChain,
   connectMetaMaskToLabChain,
   fetchLabChainStatus,
+  fetchUserRolesOnChain,
 } from './services/apiAndWeb3Service';
 import { ProducerProcessorPortal } from './components/ProducerProcessorPortal';
 import { CertifierDashboard } from './components/CertifierDashboard';
 import { ConsumerVerificationPage } from './components/ConsumerVerificationPage';
 
-type MainView = 'portal' | 'certifier' | 'consumer';
+type MainView = 'producer' | 'processor' | 'certifier' | 'consumer';
 
 const STORAGE_KEY_PRODUCTS = 'laotrace_products_v2_lo';
 const STORAGE_KEY_OFFLINE = 'laotrace_offline_drafts_v2_lo';
 
 export default function App() {
   const getInitialRoute = (): { view: MainView; tokenId: number } => {
-    const pathMatch = window.location.pathname.match(/\/verify\/(\d+)/);
+    const pathMatch = window.location.pathname.match(/\/(?:verify|product)\/(\d+)/);
     if (pathMatch) {
       return { view: 'consumer', tokenId: Number(pathMatch[1]) || 1 };
     }
     const searchParams = new URLSearchParams(window.location.search);
-    const verifyParam = searchParams.get('verify');
+    const verifyParam = searchParams.get('verify') || searchParams.get('product');
     if (verifyParam) {
       return { view: 'consumer', tokenId: Number(verifyParam) || 1 };
     }
-    return { view: 'portal', tokenId: 1 };
+    return { view: 'producer', tokenId: 1 };
   };
 
   const initialRoute = getInitialRoute();
   const [activeView, setActiveView] = useState<MainView>(initialRoute.view);
   const [consumerTokenId, setConsumerTokenId] = useState<number>(initialRoute.tokenId);
+  const [userRoles, setUserRoles] = useState<{
+    isProducer: boolean;
+    isProcessor: boolean;
+    isCertifier: boolean;
+    isAdmin: boolean;
+  } | null>(null);
 
   const [architectureMode, setArchitectureMode] = useState<ArchitectureMode>('hybrid-web3');
 
@@ -160,8 +168,20 @@ export default function App() {
       const res = await connectMetaMaskToLabChain();
       setWalletAddress(res.address);
       setWalletBalanceLab(res.balanceLab);
+
+      const roles = await fetchUserRolesOnChain(res.address, contractAddress);
+      setUserRoles(roles);
+
+      const roleBadges: string[] = [];
+      if (roles.isAdmin) roleBadges.push('Admin');
+      if (roles.isProducer) roleBadges.push('Producer');
+      if (roles.isProcessor) roleBadges.push('Processor');
+      if (roles.isCertifier) roleBadges.push('Certifier');
+
       toast.success(
-        `ເຊື່ອມຕໍ່ສຳເລັດ! Connected: ${res.address.slice(0, 6)}...${res.address.slice(-4)}`,
+        `ເຊື່ອມຕໍ່ສຳເລັດ! Connected: ${res.address.slice(0, 6)}...${res.address.slice(-4)}${
+          roleBadges.length > 0 ? ` [${roleBadges.join(', ')}]` : ''
+        }`,
         { id: toastId }
       );
     } catch (err) {
@@ -328,35 +348,48 @@ export default function App() {
               </button>
             </div>
 
-            {/* 3 Simple Role Tabs */}
+            {/* 4 Clear Separated Views: Upstream, Midstream, Certifier, Consumer */}
             <nav
               aria-label="Main Views"
               className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200"
             >
               <button
                 type="button"
-                onClick={() => setActiveView('portal')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
-                  activeView === 'portal'
+                onClick={() => setActiveView('producer')}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  activeView === 'producer'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'text-slate-700 hover:bg-white'
+                }`}
+              >
+                <Sprout className="w-4 h-4" aria-hidden="true" />
+                <span>1. 🌱 ຕົ້ນນ້ຳ (Producer)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveView('processor')}
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                  activeView === 'processor'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-700 hover:bg-white'
                 }`}
               >
                 <Factory className="w-4 h-4" aria-hidden="true" />
-                <span>1. ຜູ້ຜະລິດ & ໂຮງງານ (Producer)</span>
+                <span>2. 🏭 ກາງນ້ຳ (Processor)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveView('certifier')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
                   activeView === 'certifier'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-700 hover:bg-white'
                 }`}
               >
                 <ShieldCheck className="w-4 h-4" aria-hidden="true" />
-                <span>2. ຜູ້ກວດສອບ (Certifier)</span>
+                <span>3. 📋 ຜູ້ກວດສອບ (Certifier)</span>
                 {pendingCertCount > 0 && (
                   <span className="px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-400 text-slate-950">
                     {pendingCertCount}
@@ -367,14 +400,14 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setActiveView('consumer')}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
+                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${
                   activeView === 'consumer'
                     ? 'bg-emerald-600 text-white shadow-sm'
                     : 'text-slate-700 hover:bg-white'
                 }`}
               >
                 <QrCode className="w-4 h-4" aria-hidden="true" />
-                <span>3. ຜູ້ບໍລິໂພກສະແກນ QR ⭐</span>
+                <span>4. 🔍 ຜູ້ບໍລິໂພກ (Consumer)</span>
               </button>
             </nav>
 
@@ -412,19 +445,46 @@ export default function App() {
               </button>
 
               {walletAddress ? (
-                <button
-                  type="button"
-                  onClick={handleConnectWallet}
-                  className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100"
-                >
-                  <Wallet className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                  <span className="font-mono">
-                    {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded bg-emerald-200/80 text-[10px]">
-                    {walletBalanceLab} LAB
-                  </span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleConnectWallet}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-900 border border-emerald-300 hover:bg-emerald-100"
+                  >
+                    <Wallet className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
+                    <span className="font-mono">
+                      {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-200/80 text-[10px]">
+                      {walletBalanceLab} LAB
+                    </span>
+                  </button>
+
+                  {userRoles && (
+                    <div className="hidden sm:flex items-center gap-1">
+                      {userRoles.isAdmin && (
+                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-black bg-amber-400 text-slate-950">
+                          👑 Admin
+                        </span>
+                      )}
+                      {userRoles.isProducer && (
+                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                          🌱 Producer
+                        </span>
+                      )}
+                      {userRoles.isProcessor && (
+                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-teal-100 text-teal-800">
+                          🏭 Processor
+                        </span>
+                      )}
+                      {userRoles.isCertifier && (
+                        <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-100 text-blue-800">
+                          📋 Certifier
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <button
                   type="button"
@@ -452,13 +512,15 @@ export default function App() {
 
       {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeView === 'portal' && (
+        {(activeView === 'producer' || activeView === 'processor') && (
           <ProducerProcessorPortal
             products={products}
             offlineDrafts={offlineDrafts}
             architectureMode={architectureMode}
             contractAddress={contractAddress}
             backendApiUrl={backendApiUrl}
+            activeRole={activeView === 'processor' ? 'processor' : 'producer'}
+            onNavigateToRole={(role) => setActiveView(role)}
             onProductRegistered={handleProductRegistered}
             onCheckpointAdded={handleCheckpointAdded}
             onQuotaUpdated={handleQuotaUpdated}

@@ -1,18 +1,16 @@
 import React, { useRef, useState } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import toast from 'react-hot-toast';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   Camera,
   CheckCircle2,
   CloudOff,
   Coffee,
-  Cpu,
   ExternalLink,
   Factory,
   MapPin,
   PackagePlus,
   Printer,
-  QrCode,
   RefreshCw,
   Scale,
   Send,
@@ -42,6 +40,8 @@ interface ProducerProcessorPortalProps {
   architectureMode: ArchitectureMode;
   contractAddress: string;
   backendApiUrl: string;
+  activeRole?: 'producer' | 'processor';
+  onNavigateToRole?: (role: 'producer' | 'processor') => void;
   onProductRegistered: (newProduct: TraceableProduct) => void;
   onCheckpointAdded: (tokenId: number, checkpoint: CheckpointMetadata) => void;
   onQuotaUpdated: (tokenId: number, quota: QuotaCalculationResult) => void;
@@ -52,57 +52,57 @@ interface ProducerProcessorPortalProps {
 
 const PRESET_LOCATIONS = [
   {
-    label: 'สวนกาแฟปากซอง (15.1764, 106.2338)',
+    label: '☕ ປາກຊອງ (Paksong)',
     lat: 15.1764,
     lng: 106.2338,
-    locationName: 'เมืองปากซอง แขวงจำปาสัก (ที่ราบสูงบอละเวน 1,280m)',
+    locationName: 'ເມືອງປາກຊອງ ແຂວງຈຳປາສັກ (Paksong, Bolaven Plateau 1,280m)',
   },
   {
-    label: 'หมู่บ้านทอผ้าไหมโพนงาม (19.8856, 102.1347)',
+    label: '🧣 ຫຼວງພະບາງ (Luang Prabang)',
     lat: 19.8856,
     lng: 102.1347,
-    locationName: 'บ้านโพนงาม แขวงหลวงพระบาง',
+    locationName: 'ບ້ານໂພນງາມ ແຂວງຫຼວງພະບາງ (Phon Ngam, Luang Prabang)',
   },
   {
-    label: 'ป่าชาอัสสัมโบราณ 400 ปี (21.6833, 102.1058)',
+    label: '🍵 ຜົ້ງສາລີ (Phongsaly)',
     lat: 21.6833,
     lng: 102.1058,
-    locationName: 'บ้านกอแหม่ง แขวงพงสาลี (1,620m)',
+    locationName: 'ບ້ານກໍແໝ່ງ ແຂວງຜົ້ງສາລີ (Komen, Phongsaly 1,620m)',
   },
 ];
 
 const CHECKPOINT_PRESETS = [
   {
-    label: 'สีเปียก & ตากแคร่ยกสูง (Washed Process เสร็จสิ้น)',
+    label: '💧 ສີປຽກ & ຕາກແຫ້ງ (Washed Process)',
     stageType: 'processing' as const,
-    title: 'Washed Process & ตากแคร่ยกสูงเสร็จสิ้น (ความชื้น 11.2%)',
-    description: 'ผ่านขั้นตอนสีเปียกด้วยน้ำแร่ธรรมชาติ หมักควบคุมอุณหภูมิ 36 ชม. และตากบนแคร่ยกสูง 14 วัน',
-    specKey: 'วิธีแปรรูป',
-    specVal: 'Fully Washed Process (Moisture 11.2%)',
+    title: 'ສີປຽກ ແລະ ຕາກແຫ້ງສຳເລັດ (Washed & Sun-Dried 11.2%)',
+    description:
+      'ລ້າງດ້ວຍນ້ຳແຮ່ທຳມະຊາດ ໝັກ 36 ຊົ່ວໂມງ ແລະ ຕາກເທິງຮ້ານຍົກສູງ 14 ມື້ (Fully washed & sun-dried to 11.2% moisture).',
+    specVal: 'Fully Washed (Moisture 11.2%)',
   },
   {
-    label: 'คั่วกาแฟระดับ Medium Roast',
+    label: '🔥 ຂົ້ວລະດັບກາງ (Medium Roast)',
     stageType: 'roasting_dyeing' as const,
-    title: 'คั่วระดับ Medium Roast & ทดสอบ Cupping Score 86.5',
-    description: 'คั่วด้วยโปรไฟล์ Artisan Medium Roast หอมกลิ่นช็อกโกแลตและดอกไม้ป่า บรรจุถุงวาล์วพร้อมรหัส PIN',
-    specKey: 'ระดับการคั่ว',
+    title: 'ຂົ້ວກາເຟລະດັບກາງ & ບັນຈຸຖົງ (Medium Roast & Packaged)',
+    description:
+      'ຂົ້ວລະດັບກາງ ຫອມກິ່ນດອກໄມ້ປ່າ ແລະ ຊັອກໂກແລັດ Cupping Score 86.5 (Artisan Medium Roast).',
     specVal: 'Medium Roast (Cupping 86.5)',
   },
   {
-    label: 'ทอมือและย้อมครามธรรมชาติเสร็จสิ้น',
+    label: '🎨 ຍ້ອມຄາມທຳມະຊາດ (Natural Indigo Dyeing)',
     stageType: 'roasting_dyeing' as const,
-    title: 'ทอมือและย้อมครามธรรมชาติเสร็จสิ้น (Natural Dyeing)',
-    description: 'ย้อมหม้อครามธรรมชาติหมักพื้นบ้าน 12 รอบ สีติดทนนาน ปลอดสารเคมีสังเคราะห์ 100%',
-    specKey: 'สีย้อมธรรมชาติ',
-    specVal: 'ครามป่าหมักธรรมชาติ 100%',
+    title: 'ຍ້ອມສີຄາມທຳມະຊາດ & ຕໍ່າຫູກສຳເລັດ (Natural Dyeing & Weaving)',
+    description:
+      'ຍ້ອມໝໍ້ຄາມທຳມະຊາດ 12 ຮອບ ປອດສານເຄມີ 100% (100% organic natural indigo dyeing).',
+    specVal: '100% Natural Indigo Dye',
   },
   {
-    label: 'ตรวจสอบคุณภาพ & ส่งออก (Export Cleared)',
+    label: '📦 ກວດກາຄຸນນະພາບ & ສົ່ງອອກ (QC & Export)',
     stageType: 'export' as const,
-    title: 'ผ่านการตรวจสอบคุณภาพ (QC) & เตรียมส่งออก',
-    description: 'ตรวจสอบคุณภาพมาตรฐานส่งออกและผูกป้าย QR Code / ชิป NFC ประจำสินค้าเสร็จสมบูรณ์',
-    specKey: 'สถานะการส่งออก',
-    specVal: 'QC Passed & Ready for Export',
+    title: 'ຜ່ານການກວດກາຄຸນນະພາບ & ພ້ອມສົ່ງອອກ (QC Passed & Ready for Export)',
+    description:
+      'ກວດກາຄຸນນະພາບມາດຕະຖານສົ່ງອອກ ແລະ ຕິດປ້າຍ QR / NFC ສຳເລັດ (Export quality verified).',
+    specVal: 'Export QC Passed',
   },
 ];
 
@@ -112,6 +112,8 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   architectureMode,
   contractAddress,
   backendApiUrl,
+  activeRole = 'producer',
+  onNavigateToRole,
   onProductRegistered,
   onCheckpointAdded,
   onQuotaUpdated,
@@ -119,36 +121,43 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   onRemoveOfflineDraft,
   onOpenConsumerView,
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'producer' | 'processor' | 'mass-balance'>('producer');
+  const currentRole = activeRole;
 
-  // Producer Onboarding State
+  // Step 1: Producer Onboarding State
   const [category, setCategory] = useState<ProductCategory>('batch');
-  const [productName, setProductName] = useState('Paksong Arabica (กาแฟอาราบิก้า ดอยปากซอง)');
-  const [producerName, setProducerName] = useState('กลุ่มผู้ปลูกกาแฟอินทรีย์บ้านหลัก 40');
+  const [productName, setProductName] = useState(
+    'ກາເຟອາຣາບິກ້າ ປາກຊອງ (Paksong Single-Origin Arabica)'
+  );
+  const [producerName, setProducerName] = useState(
+    'ກຸ່ມຊາວສວນກາເຟອິນຊີ ບ້ານຫຼັກ 40 (Paksong Organic Farmers)'
+  );
 
-  // Batch Mode Fields (Category.AGRICULTURE = 0)
-  // ตามกฎ LaoTraceWeb3.sol: require(_requestedUnits <= _rawWeightKg * 2)
-  const [cropType, setCropType] = useState('กาแฟอาราบิก้า (Arabica Coffee)');
+  // Agriculture Batch Fields
+  const [cropType, setCropType] = useState('ກາເຟອາຣາບິກ້າ (Arabica Coffee)');
   const [variety, setVariety] = useState('Typica & Bourbon');
-  const [elevationMeters, setElevationMeters] = useState('1,280 เมตรจากระดับน้ำทะเล');
+  const [elevationMeters, setElevationMeters] = useState('1,280m above sea level');
   const [freshWeightKg, setFreshWeightKg] = useState<number>(500);
   const [plannedBagsCount, setPlannedBagsCount] = useState<number>(800);
   const [bagWeightGrams, setBagWeightGrams] = useState<number>(250);
 
-  // Craft Mode Fields (Category.HANDICRAFT = 1, rawWeightKg = 0, maxUnits = 1)
-  const [weaverName, setWeaverName] = useState('แม่ครูบัวไข วงศ์ละคร');
-  const [villageName, setVillageName] = useState('บ้านโพนงาม แขวงหลวงพระบาง');
-  const [silkType, setSilkType] = useState('ไหมน้อยสาวมือพันธุ์พื้นเมืองแท้ 100%');
-  const [naturalDye, setNaturalDye] = useState('ครามธรรมชาติ & ครั่งป่า');
-  const [ancientPattern, setAncientPattern] = useState('ลายนาคโขงโบราณ');
+  // Handicraft Silk Fields
+  const [weaverName, setWeaverName] = useState('ແມ່ຄູບົວໄຂ ວົງລະຄອນ (Master Weaver Bouakhai)');
+  const [villageName, setVillageName] = useState('ບ້ານໂພນງາມ ແຂວງຫຼວງພະບາງ (Luang Prabang)');
+  const [silkType, setSilkType] = useState('ໄໝນ້ອຍສາວມືພື້ນເມືອງ 100% (Native Hand-Reeled Silk)');
+  const [naturalDye, setNaturalDye] = useState('ຄາມທຳມະຊາດ & ຄັ່ງປ່າ (Natural Indigo & Lac)');
+  const [ancientPattern, setAncientPattern] = useState('ລາຍນາກໂຂງບູຮານ (Mekong Naga Motif)');
   const [weavingDays, setWeavingDays] = useState<number>(21);
   const [nfcUid, setNfcUid] = useState('NFC-UID-04:B8:3C:91:7A:22:80');
 
-  // Geo & Media State
+  // GPS & IPFS Photo State
   const [lat, setLat] = useState<number>(15.1764);
   const [lng, setLng] = useState<number>(106.2338);
-  const [locationName, setLocationName] = useState('เมืองปากซอง แขวงจำปาสัก (ที่ราบสูงบอละเวน 1,280m)');
-  const [capturedAt, setCapturedAt] = useState<string>(() => new Date().toISOString().replace('T', ' ').slice(0, 19));
+  const [locationName, setLocationName] = useState(
+    'ເມືອງປາກຊອງ ແຂວງຈຳປາສັກ (Paksong, Bolaven Plateau 1,280m)'
+  );
+  const [capturedAt, setCapturedAt] = useState<string>(() =>
+    new Date().toISOString().replace('T', ' ').slice(0, 19)
+  );
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>(
     'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=900&q=80'
@@ -158,16 +167,25 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   const [isMinting, setIsMinting] = useState(false);
   const [mintedProductResult, setMintedProductResult] = useState<TraceableProduct | null>(null);
 
-  // Processor Checkpoint State
+  // Step 2: Processor Checkpoint State
   const [selectedTokenId, setSelectedTokenId] = useState<number>(products[0]?.tokenId || 1);
-  const [checkpointStage, setCheckpointStage] = useState<'processing' | 'roasting_dyeing' | 'qc' | 'export'>('processing');
-  const [checkpointTitle, setCheckpointTitle] = useState('Washed Process & ตากแคร่ยกสูงเสร็จสิ้น');
-  const [checkpointDesc, setCheckpointDesc] = useState(
-    'สีเปียกด้วยน้ำแร่ธรรมชาติจากน้ำตกปากซอง หมักควบคุมอุณหภูมิ 36 ชม. และตากแคร่ยกสูงจนความชื้นอยู่ที่ 11.2%'
+  const [checkpointCodeInput, setCheckpointCodeInput] = useState<string>(
+    `LT-2026-${String(products[0]?.tokenId || 1).padStart(3, '0')}`
   );
-  const [processorName, setProcessorName] = useState('สหกรณ์แปรรูปกาแฟปากซอง (Bolaven Wet Mill)');
+  const [checkpointStage, setCheckpointStage] = useState<
+    'processing' | 'roasting_dyeing' | 'qc' | 'export'
+  >('processing');
+  const [checkpointTitle, setCheckpointTitle] = useState(
+    'ສີປຽກ ແລະ ຕາກແຫ້ງສຳເລັດ (Washed & Sun-Dried 11.2%)'
+  );
+  const [checkpointDesc, setCheckpointDesc] = useState(
+    'ລ້າງດ້ວຍນ້ຳແຮ່ທຳມະຊາດ ໝັກ 36 ຊົ່ວໂມງ ແລະ ຕາກເທິງຮ້ານຍົກສູງ 14 ມື້ (Fully washed & sun-dried to 11.2% moisture).'
+  );
+  const [processorName, setProcessorName] = useState(
+    'ສະຫະກອນກາເຟປາກຊອງ (Bolaven Wet Mill Co-op)'
+  );
   const [checkpointGps, setCheckpointGps] = useState('15.1821, 106.2412');
-  const [roastOrProcessSpec, setRoastOrProcessSpec] = useState('Medium Roast / Moisture 11.2%');
+  const [roastOrProcessSpec, setRoastOrProcessSpec] = useState('Moisture 11.2% / Grade A');
   const [checkpointFile, setCheckpointFile] = useState<File | null>(null);
   const [checkpointImgPreview, setCheckpointImgPreview] = useState<string>(
     'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?auto=format&fit=crop&w=900&q=80'
@@ -176,7 +194,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   const [isUploadingCheckpointIpfs, setIsUploadingCheckpointIpfs] = useState<boolean>(false);
   const [isSubmittingCheckpoint, setIsSubmittingCheckpoint] = useState(false);
 
-  // Mass Balance Quota Calculator State
+  // Step 3: Mass Balance Quota State
   const [quotaTokenId, setQuotaTokenId] = useState<number>(1);
   const [rawInputKg, setRawInputKg] = useState<number>(500);
   const [yieldPercent, setYieldPercent] = useState<number>(80);
@@ -187,6 +205,9 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   const qrDialogRef = useRef<HTMLDialogElement | null>(null);
   const [qrModalProduct, setQrModalProduct] = useState<TraceableProduct | null>(null);
 
+  const retailDialogRef = useRef<HTMLDialogElement | null>(null);
+  const [retailModalProduct, setRetailModalProduct] = useState<TraceableProduct | null>(null);
+
   const openQrLabelDialog = (prod: TraceableProduct) => {
     setQrModalProduct(prod);
     if (qrDialogRef.current && typeof qrDialogRef.current.showModal === 'function') {
@@ -194,36 +215,47 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
     }
   };
 
-  const handleSelectCategory = (nextCat: ProductCategory) => {
-    setCategory(nextCat);
-    if (nextCat === 'batch') {
-      setProductName('Paksong Arabica (กาแฟอาราบิก้า ดอยปากซอง)');
-      setProducerName('กลุ่มผู้ปลูกกาแฟอินทรีย์บ้านหลัก 40');
-      setLat(15.1764);
-      setLng(106.2338);
-      setLocationName('เมืองปากซอง แขวงจำปาสัก (ที่ราบสูงบอละเวน 1,280m)');
-      setImagePreview('https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=900&q=80');
-    } else {
-      setProductName('Savannakhet / Luang Prabang Handwoven Silk');
-      setProducerName('แม่ครูบัวไข วงศ์ละคร (กลุ่มทอผ้าบ้านโพนงาม)');
-      setLat(19.8856);
-      setLng(102.1347);
-      setLocationName('บ้านโพนงาม แขวงหลวงพระบาง');
-      setImagePreview('https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80');
+  const openRetailStickersDialog = (prod: TraceableProduct) => {
+    setRetailModalProduct(prod);
+    if (retailDialogRef.current && typeof retailDialogRef.current.showModal === 'function') {
+      retailDialogRef.current.showModal();
     }
   };
 
-  // ดึงพิกัด GPS จริงจากมือถือชาวสวนด้วย navigator.geolocation.getCurrentPosition() สำหรับ registerProduct()
+  const handleSelectCategory = (nextCat: ProductCategory) => {
+    setCategory(nextCat);
+    if (nextCat === 'batch') {
+      setProductName('ກາເຟອາຣາບິກ້າ ປາກຊອງ (Paksong Single-Origin Arabica)');
+      setProducerName('ກຸ່ມຊາວສວນກາເຟອິນຊີ ບ້ານຫຼັກ 40 (Paksong Organic Farmers)');
+      setLat(15.1764);
+      setLng(106.2338);
+      setLocationName('ເມືອງປາກຊອງ ແຂວງຈຳປາສັກ (Paksong, Bolaven Plateau 1,280m)');
+      setImagePreview(
+        'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=900&q=80'
+      );
+    } else {
+      setProductName('ຜ້າໄໝລາວຕໍ່າດ້ວຍມື ຍ້ອມຄາມທຳມະຊາດ (Luang Prabang Handwoven Silk)');
+      setProducerName('ແມ່ຄູບົວໄຂ ວົງລະຄອນ (ບ້ານໂພນງາມ ຫຼວງພະບາງ)');
+      setLat(19.8856);
+      setLng(102.1347);
+      setLocationName('ບ້ານໂພນງາມ ແຂວງຫຼວງພະບາງ (Phon Ngam, Luang Prabang)');
+      setImagePreview(
+        'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=900&q=80'
+      );
+    }
+  };
+
+  // Real Mobile GPS Capture via navigator.geolocation.getCurrentPosition()
   const handleCaptureGps = () => {
     const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
     setCapturedAt(nowStr);
 
     if (!navigator.geolocation) {
-      toast.error('เบราว์เซอร์ไม่รองรับ Geolocation API ใช้พิกัดแปลงปลูกเริ่มต้นแทน');
+      toast.error('ເບຣາວ໌ເຊີບໍ່ຮອງຮັບ GPS (Geolocation not supported)');
       return;
     }
 
-    const loadingId = toast.loading('กำลังดึงค่าพิกัด GPS ปัจจุบันจากมือถือ (navigator.geolocation)...');
+    const loadingId = toast.loading('📍 ກຳລັງດຶງພິກັດ GPS ຈາກມືຖື... (Getting GPS coordinates...)');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         toast.dismiss(loadingId);
@@ -231,25 +263,24 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         const newLng = Number(pos.coords.longitude.toFixed(5));
         setLat(newLat);
         setLng(newLng);
-        setLocationName(`พิกัดถ่ายภาพจริง (${newLat}, ${newLng})`);
-        toast.success(`ดึงพิกัด GPS จากอุปกรณ์สำเร็จ: ${newLat}, ${newLng}`);
+        setLocationName(`ພິກັດ GPS ຕົວຈິງ (${newLat}, ${newLng})`);
+        toast.success(`ດຶງພິກັດ GPS ສຳເລັດ! (${newLat}, ${newLng})`);
       },
       () => {
         toast.dismiss(loadingId);
-        toast.success(`ฝังพิกัดแปลงปลูกมาตรฐาน (${lat}, ${lng}) และเวลา ${nowStr} เรียบร้อย`);
+        toast.success(`ໃຊ້ພິກັດສວນ (${lat}, ${lng}) • ${nowStr}`);
       },
       { enableHighAccuracy: true, timeout: 6000 }
     );
   };
 
-  // ดึงพิกัด GPS จริงจากมือถือโรงแปรรูปด้วย navigator.geolocation.getCurrentPosition() สำหรับ addCheckpoint()
   const handleCaptureCheckpointGps = () => {
     if (!navigator.geolocation) {
-      toast.error('เบราว์เซอร์ไม่รองรับ Geolocation API');
+      toast.error('Geolocation not supported');
       return;
     }
 
-    const loadingId = toast.loading('กำลังดึงพิกัด GPS ปัจจุบันสำหรับ addCheckpoint()...');
+    const loadingId = toast.loading('📍 ກຳລັງດຶງພິກັດ GPS ປັດຈຸບັນ... (Getting GPS...)');
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         toast.dismiss(loadingId);
@@ -257,20 +288,20 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         const newLng = Number(pos.coords.longitude.toFixed(5));
         const formatted = `${newLat}, ${newLng}`;
         setCheckpointGps(formatted);
-        toast.success(`ดึงพิกัด _locationGPS สำเร็จ: ${formatted}`);
+        toast.success(`ດຶງພິກັດ GPS ສຳເລັດ: ${formatted}`);
       },
       () => {
         toast.dismiss(loadingId);
-        toast.error('ไม่สามารถเข้าถึง GPS มือถือได้ กรุณาอนุญาต Location หรือเลือกพิกัดจำลอง');
+        toast.error('ບໍ່ສາມາດດຶງ GPS ໄດ້ ກະລຸນາອະນຸຍາດ Location (Please allow location access)');
       },
       { enableHighAccuracy: true, timeout: 6000 }
     );
   };
 
-  // อัปโหลดรูปต้นน้ำขึ้น Pinata.cloud / IPFS เพื่อเอา CID มาใส่ช่อง _rootIpfsHash ทันที
+  // Upload to Pinata.cloud / IPFS
   const handlePreUploadRootToPinata = async () => {
     setIsUploadingRootIpfs(true);
-    const toastId = toast.loading('กำลังอัปโหลดรูปภาพและ JSON ขึ้น Pinata.cloud (IPFS)...');
+    const toastId = toast.loading('ກຳລັງອັບໂຫຼດຮູບຂຶ້ນ Pinata IPFS... (Uploading to IPFS...)');
     try {
       const res = await uploadMetadataToIpfs(
         selectedFile,
@@ -283,27 +314,17 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         backendApiUrl
       );
       setRootIpfsHashInput(res.ipfsHash);
-      toast.success(
-        `ได้รับรหัส CID จาก ${
-          res.source === 'pinata-direct'
-            ? 'Pinata.cloud API จริง'
-            : res.source === 'backend-api'
-            ? 'Backend IPFS API'
-            : 'ระบบจำลอง CID'
-        }: ${res.ipfsHash}`,
-        { id: toastId }
-      );
+      toast.success(`ອັບໂຫຼດສຳເລັດ! CID: ${res.ipfsHash.slice(0, 18)}...`, { id: toastId });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'อัปโหลด IPFS ไม่สำเร็จ', { id: toastId });
+      toast.error(err instanceof Error ? err.message : 'IPFS Upload Failed', { id: toastId });
     } finally {
       setIsUploadingRootIpfs(false);
     }
   };
 
-  // อัปโหลดรูปหลักฐานแปรรูปขึ้น Pinata.cloud / IPFS เพื่อเอา CID มาใส่ช่อง _evidenceIpfsHash ทันที
   const handlePreUploadCheckpointToPinata = async () => {
     setIsUploadingCheckpointIpfs(true);
-    const toastId = toast.loading('กำลังอัปโหลดรูปหลักฐานการแปรรูปขึ้น Pinata.cloud (IPFS)...');
+    const toastId = toast.loading('ກຳລັງອັບໂຫຼດຮູບຫຼັກຖານຂຶ້ນ Pinata IPFS...');
     try {
       const res = await uploadMetadataToIpfs(
         checkpointFile,
@@ -316,12 +337,9 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         backendApiUrl
       );
       setEvidenceIpfsHashInput(res.ipfsHash);
-      toast.success(
-        `ได้รับรหัส CID (_evidenceIpfsHash): ${res.ipfsHash}`,
-        { id: toastId }
-      );
+      toast.success(`ອັບໂຫຼດສຳເລັດ! CID: ${res.ipfsHash.slice(0, 18)}...`, { id: toastId });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'อัปโหลด IPFS ไม่สำเร็จ', { id: toastId });
+      toast.error(err instanceof Error ? err.message : 'IPFS Upload Failed', { id: toastId });
     } finally {
       setIsUploadingCheckpointIpfs(false);
     }
@@ -337,7 +355,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
       if (isCheckpoint) {
         setCheckpointFile(file);
         setCheckpointImgPreview(dataUrl);
-        toast.success('แนบรูปหลักฐานขั้นตอนการแปรรูปเรียบร้อย (กดปุ่มอัปโหลดขึ้น Pinata เพื่อรับ CID ได้ทันที)');
+        toast.success('ເລືອກຮູບພາບສຳເລັດ! (Photo Selected)');
       } else {
         setSelectedFile(file);
         setImagePreview(dataUrl);
@@ -366,19 +384,17 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
           : undefined,
     };
     onSaveOfflineDraft(draft);
-    toast.success('บันทึกข้อมูลแบบ Offline ลงในเครื่องสำเร็จ! สามารถกด Sync ขึ้น Blockchain ได้เมื่อมีอินเทอร์เน็ต');
+    toast.success('ບັນທຶກແບບ Offline ສຳເລັດ! (Saved Offline Draft)');
   };
 
-  // เรียก LaoTraceWeb3.registerProduct(_category, _name, _rootIpfsHash, _initialGPS, _rawWeightKg, _requestedUnits)
   const handleRegisterProductSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ตรวจสอบกฎ Mass Balance บนเชนของ LaoTraceWeb3.sol ก่อนส่ง
     if (category === 'batch' && plannedBagsCount > freshWeightKg * 2) {
       toast.error(
-        `กฎ Mass Balance บน Smart Contract: กาแฟสด ${freshWeightKg} กก. บรรจุขายจริงได้ไม่เกิน ${
+        `ເກີນໂຄວຕາ! ນ້ຳໜັກສົດ ${freshWeightKg} kg ສ້າງໄດ້ສູງສຸດ ${
           freshWeightKg * 2
-        } ถุง (rawWeightKg * 2)!`
+        } ຖົງ (Quota Exceeded: Max ${freshWeightKg * 2} bags)`
       );
       return;
     }
@@ -392,8 +408,8 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
       name: productName,
       description:
         category === 'batch'
-          ? `สินค้าเกษตรต้นน้ำ (Category.AGRICULTURE): ${cropType} สายพันธุ์ ${variety} ความสูง ${elevationMeters} น้ำหนักสด ${freshWeightKg} กก. (maxUnits = ${plannedBagsCount})`
-          : `สินค้าหัตถกรรมชิ้นเดียวในโลก (Category.HANDICRAFT, maxUnits = 1): ทอโดย ${weaverName} หมู่บ้าน ${villageName} ย้อมสี ${naturalDye} ลาย ${ancientPattern}`,
+          ? `${cropType} (${variety}) • ນ້ຳໜັກສົດ ${freshWeightKg} kg • ໂຄວຕາ ${plannedBagsCount} ຖົງ`
+          : `ຜ້າໄໝຕໍ່າດ້ວຍມື ໂດຍ ${weaverName} (${villageName}) • ຍ້ອມສີ ${naturalDye} • ລາຍ ${ancientPattern}`,
       category: category === 'batch' ? 'AGRICULTURE' : 'HANDICRAFT',
       producerName,
       initialGPS: initialGpsString,
@@ -402,7 +418,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
       geo: { lat, lng, locationName, capturedAt: nowStr },
     };
 
-    const toastId = toast.loading('1/2 กำลังอัปโหลดรูปภาพและ Metadata JSON ขึ้น IPFS (Pinata)...');
+    const toastId = toast.loading('1/2 ກຳລັງອັບໂຫຼດຮູບຂຶ້ນ Pinata IPFS... (Uploading to IPFS...)');
     try {
       const ipfsRes = rootIpfsHashInput.trim()
         ? { ipfsHash: rootIpfsHashInput.trim() }
@@ -410,9 +426,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
       setRootIpfsHashInput(ipfsRes.ipfsHash);
 
       toast.loading(
-        architectureMode === 'hybrid-web3'
-          ? `2/2 กำลังเรียก LaoTraceWeb3.registerProduct(${category === 'batch' ? 0 : 1}, "${productName}", ...) บน LAB Chain...`
-          : `2/2 กำลังส่ง Transaction ผ่านระบบ Gasless Relayer ไปยัง LAB Chain...`,
+        `2/2 ກຳລັງບັນທຶກຂຶ້ນ LAB Chain... (Calling registerProduct on Blockchain...)`,
         { id: toastId }
       );
 
@@ -466,11 +480,11 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
             stageType: 'origin',
             title:
               category === 'batch'
-                ? `Harvested at Origin Farm (${cropType} • ${freshWeightKg} กก.)`
-                : `Handwoven by Artisan (${ancientPattern} • maxUnits = 1)`,
+                ? `1. ເກັບກ່ຽວຜົນຜະລິດຢູ່ສວນ (Harvested at Origin • ${freshWeightKg} kg)`
+                : `1. ຕໍ່າຫູກດ້ວຍມື (Handwoven by Artisan • ${ancientPattern})`,
             description: metadataPayload.description,
             actorName: producerName,
-            actorRole: 'authorizedProducers',
+            actorRole: 'Producer (ຜູ້ຜະລິດຕົ້ນນ້ຳ)',
             actorAddress: txRes.signerAddress,
             timestamp: nowStr,
             txHash: txRes.txHash,
@@ -480,14 +494,14 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
             extraSpecs:
               category === 'batch'
                 ? {
-                    'Category': 'AGRICULTURE (0)',
-                    'rawWeightKg': `${freshWeightKg} กก.`,
-                    'maxUnits': `${plannedBagsCount} ถุง (<= ${freshWeightKg * 2})`,
+                    Category: 'AGRICULTURE',
+                    'Raw Weight': `${freshWeightKg} kg`,
+                    'Batch Units': `${plannedBagsCount} Bags`,
                   }
                 : {
-                    'Category': 'HANDICRAFT (1)',
-                    'maxUnits': '1 ชิ้น (Unique Item)',
-                    'NFC UID': nfcUid,
+                    Category: 'HANDICRAFT',
+                    Edition: '1 Unique Item',
+                    'NFC Tag': nfcUid,
                   },
           },
         ],
@@ -495,12 +509,12 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
           isCertified: false,
           certIpfsHash: '',
           certPdfUrl: '',
-          certStandard: 'รอการตรวจสอบมาตรฐาน Lao Organic / GI',
-          certifierOrganization: 'กรมกสิกรรม (DOA) / สมาคมหัตถกรรมแห่งชาติ',
+          certStandard: 'ລໍຖ້າການກວດສອບມາດຕະຖານ Lao Organic / GI (Pending Certification)',
+          certifierOrganization: 'ກົມກະສິກຳ (DOA) / Lao GI Board',
           certifierAddress: '',
           certifiedAt: '',
           txHash: '',
-          inspectorNote: 'เพิ่งลงทะเบียนต้นน้ำ รอผู้ตรวจมาตรฐานกดประทับตรา certifyProduct() บนเชน',
+          inspectorNote: 'ລໍຖ້າຜູ້ກວດສອບມາດຕະຖານກົດອະນຸມັດ (Waiting for Certifier Approval)',
         },
         quota: quotaRes,
       };
@@ -508,14 +522,15 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
       onProductRegistered(newProduct);
       setMintedProductResult(newProduct);
       setSelectedTokenId(newProduct.tokenId);
+      setCheckpointCodeInput(`LT-2026-${String(newProduct.tokenId).padStart(3, '0')}`);
       setQuotaTokenId(newProduct.tokenId);
 
       toast.success(
-        `Mint สำเร็จ! สร้าง Product ID #${finalId} บน LaoTraceWeb3 และสร้างป้าย QR Code เรียบร้อย`,
+        `ສ້າງລະຫັດສິນຄ້າ LT-2026-${String(finalId).padStart(3, '0')} ສຳເລັດ! (Product Code Generated)`,
         { id: toastId, duration: 5000 }
       );
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'เกิดข้อผิดพลาดในการบันทึกข้อมูล';
+      const msg = err instanceof Error ? err.message : 'Registration failed';
       toast.error(msg, { id: toastId });
     } finally {
       setIsMinting(false);
@@ -523,7 +538,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   };
 
   const handleSyncOfflineDraft = async (draft: OfflineDraftItem) => {
-    const toastId = toast.loading(`กำลัง Sync "${draft.productName}" ขึ้น IPFS และ LAB Chain...`);
+    const toastId = toast.loading(`ກຳລັງ Sync "${draft.productName}" ຂຶ້ນ LAB Chain...`);
     try {
       const ipfsRes = await uploadMetadataToIpfs(null, { ...draft }, backendApiUrl);
       const rawW = draft.category === 'batch' ? draft.batchData?.freshWeightKg || 500 : 0;
@@ -559,13 +574,10 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
           {
             stepNumber: 1,
             stageType: 'origin',
-            title:
-              draft.category === 'batch'
-                ? 'Harvested at Origin Farm (Offline Synced)'
-                : 'Handwoven by Artisan (Offline Synced)',
-            description: `ถ่ายภาพและเก็บพิกัด GPS (${draft.geo.lat}, ${draft.geo.lng}) เมื่อ ${draft.geo.capturedAt}`,
+            title: '1. ລົງທະບຽນຕົ້ນນ້ຳ (Synced from Offline Draft)',
+            description: `GPS: ${draft.geo.lat}, ${draft.geo.lng} • ${draft.geo.capturedAt}`,
             actorName: draft.producerName,
-            actorRole: 'authorizedProducers',
+            actorRole: 'Producer',
             actorAddress: txRes.signerAddress,
             timestamp: draft.createdAt,
             txHash: txRes.txHash,
@@ -578,30 +590,29 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
           isCertified: false,
           certIpfsHash: '',
           certPdfUrl: '',
-          certStandard: 'รอการตรวจสอบมาตรฐาน Lao Organic / GI',
-          certifierOrganization: 'กรมกสิกรรม (DOA)',
+          certStandard: 'ລໍຖ້າການກວດສອບ Lao Organic / GI (Pending)',
+          certifierOrganization: 'ກົມກະສິກຳ (DOA)',
           certifierAddress: '',
           certifiedAt: '',
           txHash: '',
-          inspectorNote: 'รอผู้ตรวจมาตรฐานตรวจสอบ',
+          inspectorNote: 'Pending audit',
         },
       };
 
       onProductRegistered(syncedProduct);
       onRemoveOfflineDraft(draft.id);
       setMintedProductResult(syncedProduct);
-      toast.success(`Sync ข้อมูล Offline เป็น Product #${nextTokenId} สำเร็จ!`, { id: toastId });
+      toast.success(`Sync ສິນຄ້າ #${nextTokenId} ສຳເລັດ!`, { id: toastId });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Sync ไม่สำเร็จ', { id: toastId });
+      toast.error(err instanceof Error ? err.message : 'Sync failed', { id: toastId });
     }
   };
 
-  // ฟังก์ชันที่ 2 ของ LaoTraceWeb3.sol: addCheckpoint(_productId, _stageName, _locationGPS, _evidenceIpfsHash)
   const handleAddCheckpointSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetProduct = products.find((p) => p.tokenId === selectedTokenId);
     if (!targetProduct) {
-      toast.error('ไม่พบรหัสสินค้าที่เลือก');
+      toast.error('Product not found');
       return;
     }
 
@@ -609,7 +620,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
     const nowStr = new Date().toISOString().replace('T', ' ').slice(0, 19);
     const nextStepNum = targetProduct.checkpoints.length + 1;
 
-    const toastId = toast.loading('1/2 กำลังอัปโหลดหลักฐานขั้นตอนการผลิต (evidenceIpfsHash) ขึ้น Pinata IPFS...');
+    const toastId = toast.loading('1/2 ກຳລັງອັບໂຫຼດຮູບຫຼັກຖານຂຶ້ນ Pinata IPFS...');
     try {
       const ipfsRes = evidenceIpfsHashInput.trim()
         ? { ipfsHash: evidenceIpfsHashInput.trim() }
@@ -629,10 +640,9 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
           );
       setEvidenceIpfsHashInput(ipfsRes.ipfsHash);
 
-      toast.loading(
-        `2/2 กำลังเรียก LaoTraceWeb3.addCheckpoint(${selectedTokenId}, "${checkpointTitle}", "${checkpointGps}", "${ipfsRes.ipfsHash}") บน LAB Chain...`,
-        { id: toastId }
-      );
+      toast.loading(`2/2 ກຳລັງບັນທຶກຂັ້ນຕອນລົງ LAB Chain... (Calling addCheckpoint...)`, {
+        id: toastId,
+      });
 
       const txRes = await callAddCheckpointOnChain({
         tokenId: selectedTokenId,
@@ -644,17 +654,15 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         backendApiUrl,
       });
 
-      const [parsedLat, parsedLng] = checkpointGps
-        .split(',')
-        .map((s) => Number(s.trim()));
+      const [parsedLat, parsedLng] = checkpointGps.split(',').map((s) => Number(s.trim()));
 
       const newCheckpoint: CheckpointMetadata = {
         stepNumber: nextStepNum,
         stageType: checkpointStage,
-        title: checkpointTitle,
+        title: `${nextStepNum}. ${checkpointTitle}`,
         description: checkpointDesc,
         actorName: processorName,
-        actorRole: 'authorizedProcessors',
+        actorRole: 'Processor (ໂຮງແປຮູບ)',
         actorAddress: txRes.signerAddress,
         timestamp: nowStr,
         txHash: txRes.txHash,
@@ -663,23 +671,24 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         geo: {
           lat: !Number.isNaN(parsedLat) ? parsedLat : targetProduct.geo.lat,
           lng: !Number.isNaN(parsedLng) ? parsedLng : targetProduct.geo.lng,
-          locationName: `${processorName} (GPS: ${checkpointGps})`,
+          locationName: `${processorName} (${checkpointGps})`,
           capturedAt: nowStr,
         },
         extraSpecs: {
-          'stageName': checkpointTitle,
-          'locationGPS': checkpointGps,
-          'พารามิเตอร์': roastOrProcessSpec,
+          Stage: checkpointTitle,
+          Spec: roastOrProcessSpec,
         },
       };
 
       onCheckpointAdded(selectedTokenId, newCheckpoint);
-      toast.success(`บันทึก Checkpoint ขั้นตอนที่ ${nextStepNum} ของ Product #${selectedTokenId} สำเร็จ!`, {
-        id: toastId,
-        duration: 4500,
-      });
+      toast.success(
+        `ເພີ່ມຂັ້ນຕອນທີ ${nextStepNum} ສຳເລັດ! (Checkpoint #${nextStepNum} Added)`,
+        { id: toastId, duration: 4500 }
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'เพิ่ม Checkpoint ไม่สำเร็จ', { id: toastId });
+      toast.error(err instanceof Error ? err.message : 'Failed to add checkpoint', {
+        id: toastId,
+      });
     } finally {
       setIsSubmittingCheckpoint(false);
     }
@@ -688,7 +697,7 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
   const handleCalculateMassBalance = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsGeneratingQuota(true);
-    const toastId = toast.loading('กำลังคำนวณโควตา Mass Balance (_rawWeightKg * 2) และสร้างรหัส Unit...');
+    const toastId = toast.loading('ກຳລັງຄິດໄລ່ໂຄວຕາ & ສ້າງລະຫັດ PIN... (Calculating Quota...)');
     try {
       const result = await generateMassBalanceQuotaCodes({
         tokenId: quotaTokenId,
@@ -701,12 +710,12 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
       onQuotaUpdated(quotaTokenId, result);
       if (result.isWithinQuota) {
         toast.success(
-          `ผ่านเกณฑ์ On-Chain Mass Balance! อนุมัติโควตา ${result.requestedBags.toLocaleString()} ถุง (ไม่เกินเพดาน ${result.maxAllowedBags.toLocaleString()} ถุง)`,
+          `ຜ່ານເກນໂຄວຕາ! ອະນຸມັດ ${result.requestedBags.toLocaleString()} ຖົງ (Approved within ${result.maxAllowedBags.toLocaleString()} limit)`,
           { id: toastId }
         );
       } else {
         toast.error(
-          `Smart Contract Revert: จำนวนถุงที่ขอ (${result.requestedBags.toLocaleString()}) เกินโควตา rawWeightKg * 2 (${result.maxAllowedBags.toLocaleString()} ถุง)!`,
+          `ເກີນໂຄວຕາ! ຂໍ ${result.requestedBags.toLocaleString()} ຖົງ ແຕ່ສູງສຸດໄດ້ ${result.maxAllowedBags.toLocaleString()} ຖົງ`,
           { id: toastId, duration: 6000 }
         );
       }
@@ -715,6 +724,8 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
     }
   };
 
+  const selectedCheckpointProduct =
+    products.find((p) => p.tokenId === selectedTokenId) || products[0];
   const selectedQuotaProduct = products.find((p) => p.tokenId === quotaTokenId) || products[0];
   const liveMaxAllowedBags = rawInputKg * 2;
   const isLiveOverQuota = requestedBagUnits > liveMaxAllowedBags;
@@ -722,66 +733,52 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
 
   return (
     <section aria-labelledby="portal-heading" className="space-y-8">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-2xl p-6 sm:p-8 text-white shadow-lg border border-emerald-700/40">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      {/* Role-Specific Header Banner */}
+      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-8 text-white shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 mb-3">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 mb-2">
               <Sparkles className="w-3.5 h-3.5" aria-hidden="true" />
-              หน้าจอที่ 1: Producer & Processor Portal (เชื่อมตรงกับ LaoTraceWeb3.sol)
+              {currentRole === 'producer'
+                ? '🌱 ໜ້າຈໍທີ 1 • ຕົ້ນນ້ຳ (Upstream Producer)'
+                : '🏭 ໜ້າຈໍທີ 2 • ກາງນ້ຳ (Midstream Processor)'}
             </span>
-            <h1 id="portal-heading" className="text-2xl sm:text-3xl font-bold tracking-tight">
-              ระบบลงทะเบียนผลผลิตต้นน้ำ & อัปเดตห่วงโซ่อุปทานกลางน้ำ
+            <h1 id="portal-heading" className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              {currentRole === 'producer'
+                ? 'ລົງທະບຽນສິນຄ້າຕົ້ນນ້ຳ (Register Origin Product)'
+                : 'ອັບເດດຂັ້ນຕອນການແປຮູບ & ບັນຈຸ (Processing & Packaging)'}
             </h1>
-            <p className="text-emerald-100/90 text-sm sm:text-base mt-1.5 max-w-3xl">
-              รองรับ <code>Category.AGRICULTURE (0)</code> (ตรวจสอบโควตาบนเชน{' '}
-              <code>_requestedUnits &lt;= _rawWeightKg * 2</code>) และ{' '}
-              <code>Category.HANDICRAFT (1)</code> (<code>maxUnits = 1</code>)
+            <p className="text-emerald-100/90 text-sm mt-1">
+              {currentRole === 'producer'
+                ? 'ສຳລັບຊາວສວນກາເຟ ຫຼື ຊ່າງທໍຜ້າໄໝ ບັນທຶກຜົນຜະລິດ, ດຶງພິກັດ GPS ມືຖື ແລະ ຮັບລະຫັດສິນຄ້າ (Product Code)'
+                : 'ປ້ອນລະຫັດສິນຄ້າທີ່ໄດ້ຮັບຈາກຊາວສວນຕົ້ນນ້ຳ ເພື່ອດຶງຂໍ້ມູນສວນ ແລະ ບັນທຶກຂັ້ນຕອນການແປຮູບລົງ Blockchain'}
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2 bg-slate-950/35 p-1.5 rounded-xl border border-white/10 self-start">
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('producer')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeSubTab === 'producer'
-                  ? 'bg-white text-emerald-950 shadow-sm'
-                  : 'text-emerald-100 hover:bg-white/10'
-              }`}
-            >
-              <PackagePlus className="w-4 h-4" aria-hidden="true" />
-              1. ลงทะเบียนต้นน้ำ (registerProduct)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('processor')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeSubTab === 'processor'
-                  ? 'bg-white text-emerald-950 shadow-sm'
-                  : 'text-emerald-100 hover:bg-white/10'
-              }`}
-            >
-              <Factory className="w-4 h-4" aria-hidden="true" />
-              2. อัปเดตแปรรูป (addCheckpoint)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveSubTab('mass-balance')}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition ${
-                activeSubTab === 'mass-balance'
-                  ? 'bg-white text-emerald-950 shadow-sm'
-                  : 'text-emerald-100 hover:bg-white/10'
-              }`}
-            >
-              <Scale className="w-4 h-4" aria-hidden="true" />
-              3. โควตา Mass Balance & QR
-            </button>
+          <div className="flex items-center gap-2">
+            {currentRole === 'producer' ? (
+              <button
+                type="button"
+                onClick={() => onNavigateToRole?.('processor')}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-white text-emerald-950 hover:bg-emerald-50 transition shadow-sm"
+              >
+                <Factory className="w-3.5 h-3.5" aria-hidden="true" />
+                ໄປໜ້າໂຮງງານແປຮູບ ➡️
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onNavigateToRole?.('producer')}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-white/10 text-white hover:bg-white/20 transition border border-white/20"
+              >
+                ⬅️ ກັບໄປໜ້າຊາວສວນຕົ້ນນ້ຳ
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Offline Sync Queue Banner */}
+      {/* Offline Drafts Banner */}
       {offlineDrafts.length > 0 && (
         <div className="bg-amber-50 border border-amber-300 rounded-2xl p-5 shadow-sm">
           <div className="flex items-start gap-3">
@@ -790,11 +787,10 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
             </div>
             <div>
               <h2 className="text-base font-bold text-amber-950">
-                พบข้อมูลที่บันทึกไว้แบบ Offline รอการ Sync ({offlineDrafts.length} รายการ)
+                ຂໍ້ມູນທີ່ບັນທຶກໄວ້ຕອນບໍ່ມີອິນເຕີເນັດ • Offline Drafts ({offlineDrafts.length})
               </h2>
-              <p className="text-sm text-amber-800">
-                ข้อมูลภาพถ่ายและพิกัด GPS ถูกเก็บไว้ในเครื่อง สามารถกด Sync ขึ้น IPFS และ{' '}
-                <code>LaoTraceWeb3.sol</code> ได้ทันทีเมื่อมีสัญญาณอินเทอร์เน็ต
+              <p className="text-xs text-amber-800">
+                ກົດປຸ່ມ Sync ເພື່ອສົ່ງຂໍ້ມູນຂຶ້ນ IPFS ແລະ Blockchain ທັນທີທີ່ມີສັນຍານເນັດ
               </p>
             </div>
           </div>
@@ -805,18 +801,18 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                 className="bg-white border border-amber-200 rounded-xl p-3.5 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-900 truncate">{draft.productName}</p>
+                  <p className="font-bold text-sm text-slate-900 truncate">{draft.productName}</p>
                   <p className="text-xs text-slate-600">
-                    พิกัด: {draft.geo.lat}, {draft.geo.lng} • บันทึกเมื่อ {draft.createdAt}
+                    GPS: {draft.geo.lat}, {draft.geo.lng} • {draft.createdAt}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => handleSyncOfflineDraft(draft)}
-                  className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                  className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
                 >
                   <Wifi className="w-3.5 h-3.5" aria-hidden="true" />
-                  Sync ขึ้น Chain
+                  Sync Now
                 </button>
               </li>
             ))}
@@ -824,119 +820,132 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         </div>
       )}
 
-      {/* TAB 1: PRODUCER ONBOARDING */}
-      {activeSubTab === 'producer' && (
+      {/* ===================================================================
+          STEP 1: PRODUCER ONBOARDING (ລົງທະບຽນສິນຄ້າຕົ້ນນ້ຳ)
+         =================================================================== */}
+      {currentRole === 'producer' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">
-                  Dynamic Onboarding Form (ลงทะเบียนสินค้าต้นน้ำ)
-                </h2>
-                <p className="text-sm text-slate-600 mt-0.5">
-                  พารามิเตอร์ตรงกับ{' '}
-                  <code>
-                    registerProduct(_category, _name, _rootIpfsHash, _initialGPS, _rawWeightKg,
-                    _requestedUnits)
-                  </code>
-                </p>
-              </div>
+          {/* Left 7 Cols: Easy 3-Part Form */}
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
+            <h2 className="text-xl font-extrabold text-slate-900">
+              ລົງທະບຽນສິນຄ້າຕົ້ນນ້ຳ (Register Origin Product)
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              ເລືອກປະເພດສິນຄ້າ, ດຶງພິກັດ GPS ຈາກມືຖື ແລະ ອັບໂຫຼດຮູບພາບຂຶ້ນ Pinata IPFS
+            </p>
 
-              <div className="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => handleSelectCategory('batch')}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${
+            {/* Big Visual Category Selector */}
+            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => handleSelectCategory('batch')}
+                className={`p-4 rounded-2xl border-2 text-start transition flex items-start gap-3 ${
+                  category === 'batch'
+                    ? 'border-emerald-600 bg-emerald-50/70 shadow-sm'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-xl ${
                     category === 'batch'
-                      ? 'bg-emerald-600 text-white shadow-sm'
-                      : 'text-slate-700 hover:text-slate-900'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-100 text-slate-600'
                   }`}
                 >
-                  <Coffee className="w-4 h-4" aria-hidden="true" />
-                  AGRICULTURE (Batch)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSelectCategory('craft')}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition ${
+                  <Coffee className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-extrabold text-sm text-slate-900">
+                    ສິນຄ້າກະສິກຳ (Agriculture Batch)
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    ກາເຟ, ຊາ, ຜົນຜະລິດເປັນລ็อต (Coffee, Tea, Crops)
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectCategory('craft')}
+                className={`p-4 rounded-2xl border-2 text-start transition flex items-start gap-3 ${
+                  category === 'craft'
+                    ? 'border-purple-600 bg-purple-50/70 shadow-sm'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div
+                  className={`p-2.5 rounded-xl ${
                     category === 'craft'
-                      ? 'bg-purple-600 text-white shadow-sm'
-                      : 'text-slate-700 hover:text-slate-900'
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-slate-100 text-slate-600'
                   }`}
                 >
-                  <Sparkles className="w-4 h-4" aria-hidden="true" />
-                  HANDICRAFT (Unique)
-                </button>
-              </div>
+                  <Sparkles className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <p className="font-extrabold text-sm text-slate-900">
+                    ຫັດຖະກຳຜ້າໄໝ (Handicraft Item)
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    ຜ້າໄໝຕໍ່າດ້ວຍມື 1 ຜືນ 1 ລະຫັດ (Unique Silk Piece)
+                  </p>
+                </div>
+              </button>
             </div>
 
             <form onSubmit={handleRegisterProductSubmit} className="mt-6 space-y-6">
-              <fieldset className="space-y-4">
-                <legend className="text-sm font-bold uppercase tracking-wider text-slate-500">
-                  1. ข้อมูลชื่อสินค้า (_name) และผู้ผลิตต้นน้ำ
-                </legend>
+              {/* Part 1: Basic Info */}
+              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-4">
+                <h3 className="text-sm font-extrabold text-slate-900">
+                  1. ຂໍ້ມູນສິນຄ້າ & ຜູ້ຜະລິດ (Product & Producer Info)
+                </h3>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="product-name" className="block text-sm font-semibold text-slate-800 mb-1">
-                      ชื่อสินค้า (<code>_name</code>) <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="product-name"
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
+                      ຊື່ສິນຄ້າ (Product Name) *
                     </label>
                     <input
                       id="product-name"
-                      name="productName"
                       type="text"
                       required
                       value={productName}
                       onChange={(e) => setProductName(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-emerald-600"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
                     />
                   </div>
                   <div>
-                    <label htmlFor="producer-name" className="block text-sm font-semibold text-slate-800 mb-1">
-                      ชื่อชาวสวน / ช่างทอ <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="producer-name"
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
+                      ຊື່ຊາວສວນ / ຊ່າງຕໍ່າຫູກ (Producer Name) *
                     </label>
                     <input
                       id="producer-name"
-                      name="producerName"
                       type="text"
                       required
                       value={producerName}
                       onChange={(e) => setProducerName(e.target.value)}
-                      className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-emerald-600"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
                     />
                   </div>
                 </div>
-              </fieldset>
 
-              {category === 'batch' ? (
-                <fieldset className="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-5 space-y-4">
-                  <legend className="px-2 text-sm font-bold text-emerald-900 flex items-center gap-1.5">
-                    <Coffee className="w-4 h-4 text-emerald-700" aria-hidden="true" />
-                    2. โหมดสินค้าเกษตร (Category.AGRICULTURE = 0)
-                  </legend>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {category === 'batch' ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div>
-                      <label htmlFor="crop-type" className="block text-sm font-semibold text-slate-800 mb-1">
-                        ชนิดพืชเศรษฐกิจ <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="crop-type"
-                        name="cropType"
-                        value={cropType}
-                        onChange={(e) => setCropType(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+                      <label
+                        htmlFor="crop-variety"
+                        className="block text-xs font-bold text-slate-700 mb-1"
                       >
-                        <option value="กาแฟอาราบิก้า (Arabica Coffee)">กาแฟอาราบิก้า (Arabica Coffee - ปากซอง)</option>
-                        <option value="กาแฟโรบัสต้า (Robusta Coffee)">กาแฟโรบัสต้า (Bolaven Robusta)</option>
-                        <option value="ชาอัสสัมโบราณ (Assam Forest Tea)">ชาอัสสัมโบราณ (Assam Tea - พงสาลี)</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label htmlFor="crop-variety" className="block text-sm font-semibold text-slate-800 mb-1">
-                        สายพันธุ์ (Variety) <span className="text-red-500">*</span>
+                        ສາຍພັນ (Variety) & ຄວາມສູງ (Elevation)
                       </label>
                       <input
                         id="crop-variety"
-                        name="variety"
                         type="text"
                         required
                         value={variety}
@@ -945,117 +954,73 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                       />
                     </div>
                     <div>
-                      <label htmlFor="elevation" className="block text-sm font-semibold text-slate-800 mb-1">
-                        ความสูงแปลงปลูก (Elevation) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="elevation"
-                        name="elevationMeters"
-                        type="text"
-                        required
-                        value={elevationMeters}
-                        onChange={(e) => setElevationMeters(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="fresh-weight" className="block text-sm font-semibold text-slate-800 mb-1">
-                        น้ำหนักผลผลิตสด (<code>_rawWeightKg</code>) <span className="text-red-500">*</span>
+                      <label
+                        htmlFor="fresh-weight"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        ນ້ຳໜັກຜົນຜະລິດສົດ • Harvest Weight (kg) *
                       </label>
                       <input
                         id="fresh-weight"
-                        name="freshWeightKg"
                         type="number"
                         min={1}
                         required
                         value={freshWeightKg}
                         onChange={(e) => setFreshWeightKg(Number(e.target.value))}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900"
                       />
                     </div>
                     <div className="sm:col-span-2">
-                      <label htmlFor="planned-bags" className="block text-sm font-semibold text-slate-800 mb-1">
-                        จำนวนถุงในล็อต (<code>_requestedUnits</code> / <code>maxUnits</code>){' '}
-                        <span className="text-red-500">*</span>
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label
+                          htmlFor="planned-bags"
+                          className="block text-xs font-bold text-slate-700"
+                        >
+                          ຈຳນວນຖົງທີ່ຕ້ອງການບັນຈຸຂາຍ • Number of Bags (Units) *
+                        </label>
+                        <span
+                          className={`text-xs font-bold ${
+                            isProducerFormOverQuota ? 'text-red-600' : 'text-emerald-700'
+                          }`}
+                        >
+                          ໂຄວຕາສູງສຸດ (Max Quota): {freshWeightKg * 2} ຖົງ
+                        </span>
+                      </div>
                       <input
                         id="planned-bags"
-                        name="plannedBagsCount"
                         type="number"
                         min={1}
                         required
                         value={plannedBagsCount}
                         onChange={(e) => setPlannedBagsCount(Number(e.target.value))}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
+                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900"
                       />
                       <p
-                        className={`text-xs mt-1.5 font-semibold ${
-                          isProducerFormOverQuota ? 'text-red-600' : 'text-emerald-800'
+                        className={`text-xs mt-1.5 font-medium ${
+                          isProducerFormOverQuota ? 'text-red-600' : 'text-slate-600'
                         }`}
                       >
-                        กฎ On-Chain ใน <code>LaoTraceWeb3.sol</code>:{' '}
-                        <code>require(_requestedUnits &lt;= _rawWeightKg * 2)</code> → น้ำหนักสด{' '}
-                        {freshWeightKg} กก. ขายได้ไม่เกิน <strong>{freshWeightKg * 2} ถุง</strong>
+                        {isProducerFormOverQuota
+                          ? `⚠️ ຈຳນວນຖົງເກີນໂຄວຕາ! ນ້ຳໜັກ ${freshWeightKg} kg ບັນຈຸຂາຍໄດ້ບໍ່ເກີນ ${
+                              freshWeightKg * 2
+                            } ຖົງ`
+                          : `✅ ຜ່ານເກນ Mass Balance: ນ້ຳໜັກສົດ ${freshWeightKg} kg ຂາຍໄດ້ສູງສຸດ ${
+                              freshWeightKg * 2
+                            } ຖົງ`}
                       </p>
                     </div>
                   </div>
-                </fieldset>
-              ) : (
-                <fieldset className="bg-purple-50/60 border border-purple-200/80 rounded-2xl p-5 space-y-4">
-                  <legend className="px-2 text-sm font-bold text-purple-900 flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-purple-700" aria-hidden="true" />
-                    2. โหมดสินค้าหัตถกรรมผ้าไหม (Category.HANDICRAFT = 1, maxUnits = 1)
-                  </legend>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                     <div>
-                      <label htmlFor="weaver-name" className="block text-sm font-semibold text-slate-800 mb-1">
-                        ชื่อช่างทอ (Master Weaver) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="weaver-name"
-                        name="weaverName"
-                        type="text"
-                        required
-                        value={weaverName}
-                        onChange={(e) => setWeaverName(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="village-name" className="block text-sm font-semibold text-slate-800 mb-1">
-                        หมู่บ้าน / แขวงแหล่งทอผ้า <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="village-name"
-                        name="villageName"
-                        type="text"
-                        required
-                        value={villageName}
-                        onChange={(e) => setVillageName(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="silk-type" className="block text-sm font-semibold text-slate-800 mb-1">
-                        ชนิดเส้นไหม <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="silk-type"
-                        name="silkType"
-                        type="text"
-                        required
-                        value={silkType}
-                        onChange={(e) => setSilkType(e.target.value)}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="natural-dye" className="block text-sm font-semibold text-slate-800 mb-1">
-                        วัตถุดิบย้อมสีธรรมชาติ (คราม, ครั่ง) <span className="text-red-500">*</span>
+                      <label
+                        htmlFor="natural-dye"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        ສີຍ້ອມທຳມະຊາດ (Natural Dye)
                       </label>
                       <input
                         id="natural-dye"
-                        name="naturalDye"
                         type="text"
                         required
                         value={naturalDye}
@@ -1064,12 +1029,14 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                       />
                     </div>
                     <div>
-                      <label htmlFor="ancient-pattern" className="block text-sm font-semibold text-slate-800 mb-1">
-                        ชื่อลวดลายโบราณ <span className="text-red-500">*</span>
+                      <label
+                        htmlFor="ancient-pattern"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        ລວດລາຍຜ້າໄໝ (Silk Motif / Pattern)
                       </label>
                       <input
                         id="ancient-pattern"
-                        name="ancientPattern"
                         type="text"
                         required
                         value={ancientPattern}
@@ -1077,57 +1044,51 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                         className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
                       />
                     </div>
-                    <div>
-                      <label htmlFor="weaving-days" className="block text-sm font-semibold text-slate-800 mb-1">
-                        ระยะเวลาที่ใช้ทอมือ (วัน) <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="weaving-days"
-                        name="weavingDays"
-                        type="number"
-                        min={1}
-                        required
-                        value={weavingDays}
-                        onChange={(e) => setWeavingDays(Number(e.target.value))}
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                      />
-                    </div>
                     <div className="sm:col-span-2">
-                      <label htmlFor="nfc-uid" className="block text-sm font-semibold text-slate-800 mb-1">
-                        ผูก UID ของชิป NFC ประจำผืนผ้าไหม (<code>_rawWeightKg = 0, _requestedUnits = 1</code>)
+                      <label
+                        htmlFor="nfc-uid"
+                        className="block text-xs font-bold text-slate-700 mb-1"
+                      >
+                        ລະຫັດຊິບ NFC ປະຈຳຜືນຜ້າໄໝ (NFC Tag UID • 1 Unique Piece)
                       </label>
                       <input
                         id="nfc-uid"
-                        name="nfcUid"
                         type="text"
                         autocorrect="off"
                         autocapitalize="off"
-                        spellcheck={false}
+                        spellCheck={false}
                         value={nfcUid}
                         onChange={(e) => setNfcUid(e.target.value)}
                         className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-mono text-slate-900"
                       />
                     </div>
                   </div>
-                </fieldset>
-              )}
+                )}
+              </div>
 
-              {/* 3. Geo-Tagged Media Upload */}
-              <fieldset className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                <legend className="px-2 text-sm font-bold text-slate-800 flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-                  3. พิกัด GPS มือถือจริง (<code>_initialGPS</code>) & อัปโหลดรูปขึ้น Pinata IPFS (<code>_rootIpfsHash</code>)
-                </legend>
-
-                <div className="flex flex-wrap gap-2">
+              {/* Part 2: 1-Click Mobile GPS Location */}
+              <div className="bg-emerald-50/60 rounded-2xl p-5 border border-emerald-200 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-sm font-extrabold text-emerald-950 flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                      2. ພິກັດ GPS ແຫຼ່ງຜະລິດ (GPS Origin Location)
+                    </h3>
+                    <p className="text-xs text-emerald-800">
+                      ກົດປຸ່ມເພື່ອດຶງພິກັດຈາກມືຖືຕົວຈິງ ຫຼື ເລືອກພື້ນທີ່ຕົວຢ່າງ
+                    </p>
+                  </div>
                   <button
                     type="button"
                     onClick={handleCaptureGps}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition shadow-sm"
+                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition"
                   >
                     <MapPin className="w-3.5 h-3.5" aria-hidden="true" />
-                    ดึงพิกัด GPS จากมือถือจริง (navigator.geolocation)
+                    📍 ດຶງພິກັດ GPS ຈາກມືຖື (Get My GPS)
                   </button>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
                   {PRESET_LOCATIONS.map((loc) => (
                     <button
                       key={loc.label}
@@ -1136,71 +1097,46 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                         setLat(loc.lat);
                         setLng(loc.lng);
                         setLocationName(loc.locationName);
-                        setCapturedAt(new Date().toISOString().replace('T', ' ').slice(0, 19));
-                        toast.success(`เลือกพิกัดจำลอง: ${loc.label}`);
+                        toast.success(`ເລືອກພິກັດ: ${loc.label}`);
                       }}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition"
+                      className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-white border border-emerald-300 text-emerald-900 hover:bg-emerald-100 transition"
                     >
                       {loc.label}
                     </button>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label htmlFor="gps-lat" className="block text-xs font-semibold text-slate-600 mb-1">
-                      ละติจูด (Latitude)
-                    </label>
-                    <input
-                      id="gps-lat"
-                      type="text"
-                      readOnly
-                      value={lat}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-mono text-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="gps-lng" className="block text-xs font-semibold text-slate-600 mb-1">
-                      ลองจิจูด (Longitude)
-                    </label>
-                    <input
-                      id="gps-lng"
-                      type="text"
-                      readOnly
-                      value={lng}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-mono text-slate-800"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="gps-time" className="block text-xs font-semibold text-slate-600 mb-1">
-                      ค่า <code>_initialGPS</code> ที่ส่งเข้า Contract
-                    </label>
-                    <input
-                      id="gps-time"
-                      type="text"
-                      readOnly
-                      value={`${lat}, ${lng}`}
-                      className="w-full rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-mono text-emerald-800 font-bold"
-                    />
-                  </div>
+                <div className="bg-white rounded-xl p-3 border border-emerald-200 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <span className="text-slate-700 font-medium">{locationName}</span>
+                  <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-900 font-mono font-bold">
+                    GPS: {lat}, {lng}
+                  </span>
                 </div>
+              </div>
 
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2">
+              {/* Part 3: Photo & Pinata IPFS Upload */}
+              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200 space-y-3">
+                <h3 className="text-sm font-extrabold text-slate-900 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                  3. ຮູບພາບສິນຄ້າ & ອັບໂຫຼດຂຶ້ນ Pinata IPFS (Photo & IPFS Hash)
+                </h3>
+
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <img
                     src={imagePreview}
-                    alt="ตัวอย่างภาพถ่ายแปลงปลูกหรือการทอผ้า"
+                    alt="Product Preview"
                     width={120}
                     height={90}
                     className="w-28 h-20 object-cover rounded-xl border border-slate-300 shrink-0"
                   />
-                  <div className="flex-1 space-y-2 w-full">
+                  <div className="flex-1 space-y-2.5 w-full">
                     <div className="flex flex-wrap gap-2">
                       <label
                         htmlFor="producer-photo-upload"
-                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 cursor-pointer transition shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 cursor-pointer shadow-sm"
                       >
                         <Camera className="w-4 h-4 text-emerald-600" aria-hidden="true" />
-                        1. เลือกรูปถ่ายสวน / ผ้าไหม
+                        1. ເລືອກຮູບພາບ (Choose Photo)
                       </label>
                       <input
                         id="producer-photo-upload"
@@ -1219,54 +1155,50 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                       >
                         <Upload className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
                         {isUploadingRootIpfs
-                          ? 'กำลังอัปโหลดขึ้น Pinata...'
-                          : '2. อัปโหลดขึ้น Pinata.cloud เพื่อรับ CID ทันที'}
+                          ? 'ກຳລັງອັບໂຫຼດ... (Uploading...)'
+                          : '2. ອັບໂຫຼດຂຶ້ນ Pinata IPFS (Get CID)'}
                       </button>
                     </div>
 
-                    <div>
-                      <label htmlFor="root-ipfs-cid" className="block text-[11px] font-bold text-slate-700 mb-1">
-                        รหัส CID จาก Pinata/IPFS (<code>_rootIpfsHash</code>) — อัปโหลดอัตโนมัติหรือวางรหัส CID ได้:
-                      </label>
-                      <input
-                        id="root-ipfs-cid"
-                        type="text"
-                        autocorrect="off"
-                        autocapitalize="off"
-                        spellCheck={false}
-                        value={rootIpfsHashInput}
-                        onChange={(e) => setRootIpfsHashInput(e.target.value)}
-                        placeholder="เช่น QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco (จะสร้างให้อัตโนมัติตอนกด Mint หากเว้นว่าง)"
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-emerald-900"
-                      />
-                    </div>
+                    <input
+                      id="root-ipfs-cid"
+                      type="text"
+                      autocorrect="off"
+                      autocapitalize="off"
+                      spellCheck={false}
+                      value={rootIpfsHashInput}
+                      onChange={(e) => setRootIpfsHashInput(e.target.value)}
+                      placeholder="IPFS CID (ເຊັ່ນ QmXoy... ລະບົບຈະສ້າງໃຫ້ອັດຕະໂນມັດຖ້າປະຫວ່າງໄວ້)"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-emerald-900"
+                    />
                   </div>
                 </div>
-              </fieldset>
+              </div>
 
+              {/* Submit Buttons */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleSaveOffline}
-                  className="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold border border-amber-400 bg-amber-50 text-amber-900 hover:bg-amber-100 transition"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold border border-amber-400 bg-amber-50 text-amber-950 hover:bg-amber-100 transition"
                 >
                   <CloudOff className="w-4 h-4" aria-hidden="true" />
-                  บันทึกแบบ Offline
+                  ບັນທຶກແບບ Offline (Save Draft)
                 </button>
                 <button
                   type="submit"
                   disabled={isMinting}
-                  className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-md"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-md"
                 >
                   {isMinting ? (
                     <>
                       <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                      กำลังส่งขึ้น IPFS & เรียก registerProduct()...
+                      ກຳລັງບັນທຶກຂຶ້ນ Blockchain & ສ້າງລະຫັດສິນຄ້າ...
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4" aria-hidden="true" />
-                      Mint สินค้าต้นน้ำขึ้น LAB Chain (registerProduct)
+                      ບັນທຶກຂຶ້ນ Blockchain & ສ້າງລະຫັດສິນຄ້າ (Register & Generate Code)
                     </>
                   )}
                 </button>
@@ -1274,19 +1206,20 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
             </form>
           </div>
 
-          {/* Right Column: Instant QR Code Generator & Products List */}
+          {/* Right 5 Cols: Instant Product Code Card & Product List */}
           <div className="lg:col-span-5 space-y-6">
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700">
-                  <QrCode className="w-5 h-5" aria-hidden="true" />
+            {/* Product Code Card (ແທນ QR Code) */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center gap-2.5 mb-4">
+                <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-700">
+                  <Sparkles className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">
-                    ระบบสร้างป้าย QR Code & ชิป NFC
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    ລະຫັດສິນຄ້າຕົ້ນນ້ຳ (Origin Product Code)
                   </h3>
                   <p className="text-xs text-slate-500">
-                    พร้อมสั่งพิมพ์แปะถุงกาแฟหรือป้ายผ้าไหมทันทีหลัง Mint
+                    ສ້າງອັດຕະໂນມັດຫຼັງລົງທະບຽນ ເຊື່ອມກັບ <code>productId</code> ເທິງ Blockchain
                   </p>
                 </div>
               </div>
@@ -1294,126 +1227,198 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
               {(() => {
                 const displayProd = mintedProductResult || products[0];
                 if (!displayProd) return null;
-                const verifyUrl = `${window.location.origin}/verify/${displayProd.tokenId}`;
+                const formattedCode = `LT-2026-${String(displayProd.tokenId).padStart(3, '0')}`;
                 return (
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col items-center text-center">
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 mb-3">
-                      Product ID #{displayProd.tokenId} •{' '}
-                      {displayProd.category === 'batch' ? 'Category.AGRICULTURE' : 'Category.HANDICRAFT'}
-                    </span>
-                    <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
-                      <QRCodeSVG value={verifyUrl} size={168} level="H" includeMargin />
+                  <div className="bg-slate-50 border-2 border-emerald-500/40 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-800">
+                        On-Chain ID #{displayProd.tokenId}
+                      </span>
+                      <span className="text-xs font-bold text-slate-500">
+                        {displayProd.category === 'batch' ? '🌾 ກະສິກຳ (Batch)' : '🧣 ຫັດຖະກຳ (Craft)'}
+                      </span>
                     </div>
-                    <h4 className="font-bold text-slate-900 mt-3 text-base">
-                      {displayProd.productName}
-                    </h4>
-                    <p className="text-xs text-slate-600 mt-0.5">{displayProd.producerName}</p>
-                    <code className="mt-2 px-2.5 py-1 bg-slate-200/70 rounded text-[11px] font-mono text-slate-700 break-all">
-                      {verifyUrl}
-                    </code>
 
-                    <div className="mt-4 w-full grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Prominent Product Code Box */}
+                    <div className="bg-slate-900 text-white p-4 rounded-2xl border border-emerald-500/30 text-center space-y-2">
+                      <p className="text-[11px] uppercase tracking-wider text-emerald-300 font-bold">
+                        ລະຫັດສິນຄ້າສຳລັບສົ່ງຕໍ່ໂຮງງານ & ຜູ້ບໍລິໂພກ (Product Code)
+                      </p>
+                      <p className="text-2xl sm:text-3xl font-mono font-extrabold tracking-widest text-amber-300">
+                        {formattedCode}
+                      </p>
+                      <p className="text-xs text-slate-300">
+                        (ຫຼື ໃຊ້ເລກໄອດີສັ້ນ: <strong className="text-white">#{displayProd.tokenId}</strong>)
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(formattedCode);
+                          toast.success(`ຄັດລອກລະຫັດສິນຄ້າ ${formattedCode} ແລ້ວ! (Copied)`);
+                        }}
+                        className="mt-1 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-500 transition"
+                      >
+                        📋 ຄັດລອກລະຫັດສິນຄ້າ (Copy Code)
+                      </button>
+                    </div>
+
+                    <div>
+                      <h4 className="font-extrabold text-slate-900 text-sm">
+                        {displayProd.productName}
+                      </h4>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        ຜູ້ຜະລິດ: {displayProd.producerName}
+                      </p>
+                      <p className="text-xs text-slate-500 font-mono mt-1">
+                        ໂຄວຕາ (maxUnits):{' '}
+                        {displayProd.category === 'batch'
+                          ? `${displayProd.batchData?.plannedBagsCount || displayProd.quota?.maxAllowedBags || 0} ຖົງ`
+                          : `1 ຜືນ (${displayProd.craftData?.nfcUid || 'Unique Item'})`}
+                      </p>
+                    </div>
+
+                    {/* Sample Generated Bag PIN Codes */}
+                    {displayProd.quota?.generatedUnits && displayProd.quota.generatedUnits.length > 0 && (
+                      <div className="bg-white rounded-xl p-3 border border-slate-200 space-y-1.5">
+                        <p className="text-[11px] font-bold text-slate-700">
+                          ລະຫັດ PIN ລາຍຖົງທີ່ສ້າງພ້ອມກັນ (Sample Bag PIN Codes):
+                        </p>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {displayProd.quota.generatedUnits.slice(0, 4).map((u, idx) => (
+                            <div
+                              key={u.unitCode}
+                              className="px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] font-mono flex items-center justify-between"
+                            >
+                              <span className="font-bold text-slate-700">ຖົງ #{idx + 1}:</span>
+                              <strong className="text-emerald-800">{u.pinCode}</strong>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <button
                         type="button"
                         onClick={() => openQrLabelDialog(displayProd)}
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800 transition"
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800 transition"
                       >
                         <Printer className="w-3.5 h-3.5" aria-hidden="true" />
-                        พิมพ์ป้าย QR แปะสินค้า
+                        ພິມໃບລະຫັດສິນຄ້າ (Print Code)
                       </button>
                       <button
                         type="button"
                         onClick={() => onOpenConsumerView(displayProd.tokenId)}
-                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition"
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition"
                       >
                         <ExternalLink className="w-3.5 h-3.5" aria-hidden="true" />
-                        จำลองสแกนดูหน้าผู้บริโภค
+                        ກວດສອບລະຫັດນີ້ (Verify Code)
                       </button>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedTokenId(displayProd.tokenId);
+                        setCheckpointCodeInput(formattedCode);
+                        onNavigateToRole?.('processor');
+                        toast.success(
+                          `ສົ່ງລະຫັດ ${formattedCode} ໄປຂັ້ນຕອນທີ 2 (ໂຮງງານແປຮູບ) ແລ້ວ!`
+                        );
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-extrabold bg-amber-400 text-slate-950 hover:bg-amber-300 transition shadow-sm"
+                    >
+                      <Factory className="w-4 h-4" aria-hidden="true" />
+                      ➡️ ນຳລະຫັດ {formattedCode} ໄປຂັ້ນຕອນທີ 2: ໂຮງງານແປຮູບ (Send to Processor)
+                    </button>
                   </div>
                 );
               })()}
             </div>
 
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-              <h3 className="text-base font-bold text-slate-900 mb-3">
-                รายการสินค้าต้นน้ำบน LAB Chain ({products.length} รายการ)
+            {/* Registered Products List */}
+            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
+              <h3 className="text-base font-extrabold text-slate-900 mb-3">
+                ລາຍການລະຫັດສິນຄ້າໃນລະບົບ • Registered Products ({products.length})
               </h3>
               <ul className="space-y-3">
-                {products.map((prod) => (
-                  <li
-                    key={prod.tokenId}
-                    className="p-3.5 rounded-xl border border-slate-200 hover:border-emerald-400 transition flex items-center justify-between gap-3 bg-slate-50/60"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 text-xs font-bold rounded bg-slate-900 text-white">
-                          #{prod.tokenId}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 text-[11px] font-semibold rounded ${
-                            prod.category === 'batch'
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : 'bg-purple-100 text-purple-800'
-                          }`}
-                        >
-                          {prod.category === 'batch' ? 'AGRICULTURE' : 'HANDICRAFT'}
-                        </span>
-                        {prod.certification.isCertified && (
-                          <span className="px-2 py-0.5 text-[11px] font-semibold rounded bg-amber-100 text-amber-900">
-                            isCertified
+                {products.map((prod) => {
+                  const codeStr = `LT-2026-${String(prod.tokenId).padStart(3, '0')}`;
+                  return (
+                    <li
+                      key={prod.tokenId}
+                      className="p-3.5 rounded-2xl border border-slate-200 hover:border-emerald-400 transition flex items-center justify-between gap-3 bg-slate-50/70"
+                    >
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2 py-0.5 text-xs font-mono font-bold rounded bg-slate-900 text-amber-300">
+                            {codeStr}
                           </span>
-                        )}
+                          <span
+                            className={`px-2 py-0.5 text-[11px] font-bold rounded ${
+                              prod.category === 'batch'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-purple-100 text-purple-800'
+                            }`}
+                          >
+                            {prod.category === 'batch' ? '☕ ກະສິກຳ' : '🧣 ຜ້າໄໝ'}
+                          </span>
+                          {prod.certification.isCertified && (
+                            <span className="px-2 py-0.5 text-[11px] font-bold rounded bg-amber-100 text-amber-900">
+                              ✓ GI / Organic
+                            </span>
+                          )}
+                        </div>
+                        <p className="font-bold text-sm text-slate-900 truncate mt-1">
+                          {prod.productName}
+                        </p>
+                        <p className="text-xs text-slate-500 truncate">
+                          ID #{prod.tokenId} • {prod.checkpoints.length} ຂັ້ນຕອນ • GPS: {prod.geo.lat},{' '}
+                          {prod.geo.lng}
+                        </p>
                       </div>
-                      <p className="font-semibold text-sm text-slate-900 truncate mt-1">
-                        {prod.productName}
-                      </p>
-                      <p className="text-xs text-slate-500 truncate">
-                        {prod.checkpoints.length} ขั้นตอน • GPS: {prod.geo.lat}, {prod.geo.lng}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => openQrLabelDialog(prod)}
-                        className="p-2 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-100"
-                        aria-label={`เปิดป้าย QR ของสินค้า #${prod.tokenId}`}
-                      >
-                        <QrCode className="w-4 h-4" aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onOpenConsumerView(prod.tokenId)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
-                      >
-                        ดู Timeline
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => openQrLabelDialog(prod)}
+                          className="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-xs font-bold text-slate-700 hover:bg-slate-100"
+                        >
+                          ໃບລະຫັດ
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onOpenConsumerView(prod.tokenId)}
+                          className="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700"
+                        >
+                          ເບິ່ງປະຫວັດ
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </div>
         </div>
       )}
 
-      {/* TAB 2: PROCESSOR CHECKPOINT FORM */}
-      {activeSubTab === 'processor' && (
+      {/* ===================================================================
+          STEP 2: PROCESSOR CHECKPOINT FORM (ອັບເດດຂັ້ນຕອນການແປຮູບ)
+         =================================================================== */}
+      {currentRole === 'processor' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-            <h2 className="text-xl font-bold text-slate-900">
-              ฟอร์มเพิ่มขั้นตอนกลางน้ำ (Add Supply Chain Checkpoint)
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8">
+            <h2 className="text-xl font-extrabold text-slate-900">
+              ເພີ່ມຂັ້ນຕອນການແປຮູບ (Add Processing Step)
             </h2>
-            <p className="text-sm text-slate-600 mt-1">
-              เรียกฟังก์ชัน{' '}
-              <code>
-                LaoTraceWeb3.addCheckpoint(_productId, _stageName, _locationGPS, _evidenceIpfsHash)
-              </code>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              ນຳ <strong>ລະຫັດສິນຄ້າຕົ້ນນ້ຳ (ເຊັ່ນ LT-2026-001)</strong> ທີ່ຊາວສວນສົ່ງມາປ້ອນໃສ່ ເພື່ອເຊື່ອມຂໍ້ມູນການແປຮູບເຂົ້າກັບສວນຕົ້ນນ້ຳເທິງ Blockchain
             </p>
 
+            {/* Quick Presets */}
             <div className="mt-5">
-              <span className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
-                เลือกเทมเพลตขั้นตอนการผลิตด่วน (Quick Presets):
+              <span className="block text-xs font-bold text-slate-600 mb-2">
+                ⚡ ເລືອກຂັ້ນຕອນດ່ວນ (Quick Stage Templates):
               </span>
               <div className="flex flex-wrap gap-2">
                 {CHECKPOINT_PRESETS.map((preset) => (
@@ -1425,48 +1430,151 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                       setCheckpointTitle(preset.title);
                       setCheckpointDesc(preset.description);
                       setRoastOrProcessSpec(preset.specVal);
-                      toast.success(`เลือกขั้นตอน: ${preset.label}`);
+                      toast.success(`ເລືອກຂັ້ນຕອນ: ${preset.label}`);
                     }}
-                    className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 border border-slate-300 text-slate-800 hover:bg-emerald-50 hover:border-emerald-400 transition"
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 border border-slate-300 text-slate-800 hover:bg-emerald-50 hover:border-emerald-400 transition"
                   >
-                    + {preset.label}
+                    {preset.label}
                   </button>
                 ))}
               </div>
             </div>
 
             <form onSubmit={handleAddCheckpointSubmit} className="mt-6 space-y-5">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="checkpoint-token" className="block text-sm font-semibold text-slate-800 mb-1">
-                    เลือกรหัสสินค้า (<code>_productId</code>) <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="checkpoint-token"
-                    value={selectedTokenId}
-                    onChange={(e) => setSelectedTokenId(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                  >
-                    {products.map((p) => (
-                      <option key={p.tokenId} value={p.tokenId}>
-                        Product #{p.tokenId} — {p.productName}
-                      </option>
-                    ))}
-                  </select>
+              {/* Origin Product Code Lookup & Verification Box */}
+              <div className="bg-emerald-50/70 border-2 border-emerald-500/40 rounded-2xl p-4 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label
+                      htmlFor="checkpoint-code-input"
+                      className="block text-xs font-extrabold text-emerald-950 mb-1"
+                    >
+                      1. ປ້ອນລະຫັດສິນຄ້າຈາກຕົ້ນນ້ຳ (Enter Origin Code) *
+                    </label>
+                    <div className="flex gap-1.5">
+                      <input
+                        id="checkpoint-code-input"
+                        type="text"
+                        autocorrect="off"
+                        autocapitalize="off"
+                        spellCheck={false}
+                        value={checkpointCodeInput}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setCheckpointCodeInput(val);
+                          const parts = val.trim().match(/\d+/g);
+                          const num = parts && parts.length > 0 ? Number(parts[parts.length - 1]) : NaN;
+                          const matched = products.find((p) => p.tokenId === num);
+                          if (matched) {
+                            setSelectedTokenId(matched.tokenId);
+                          }
+                        }}
+                        placeholder="ເຊັ່ນ LT-2026-001 ຫຼື 1"
+                        className="w-full rounded-xl border border-emerald-400 bg-white px-3 py-2 text-sm font-mono font-extrabold text-slate-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="checkpoint-token"
+                      className="block text-xs font-bold text-slate-700 mb-1"
+                    >
+                      ຫຼື ເລືອກຈາກລາຍການຕົ້ນນ້ຳ (Or Select from List)
+                    </label>
+                    <select
+                      id="checkpoint-token"
+                      value={selectedTokenId}
+                      onChange={(e) => {
+                        const id = Number(e.target.value);
+                        setSelectedTokenId(id);
+                        setCheckpointCodeInput(`LT-2026-${String(id).padStart(3, '0')}`);
+                      }}
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-900"
+                    >
+                      {products.map((p) => (
+                        <option key={p.tokenId} value={p.tokenId}>
+                          LT-2026-{String(p.tokenId).padStart(3, '0')} — {p.productName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
+                {/* Full Upstream Recorded Data Card (ຂໍ້ມູນທີ່ຕົ້ນນ້ຳບັນທຶກໄວ້) */}
+                {selectedCheckpointProduct && (
+                  <div className="bg-white rounded-2xl p-4 border border-emerald-300 shadow-sm space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-800">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" aria-hidden="true" />
+                        ຂໍ້ມູນທີ່ຕົ້ນນ້ຳບັນທຶກໄວ້ (Upstream Recorded Data)
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-lg bg-slate-900 text-amber-300 text-xs font-mono font-bold">
+                        ລະຫັດ: LT-2026-{String(selectedCheckpointProduct.tokenId).padStart(3, '0')} (ID #{selectedCheckpointProduct.tokenId})
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3.5 text-xs">
+                      <img
+                        src={selectedCheckpointProduct.heroImageUrl}
+                        alt={selectedCheckpointProduct.productName}
+                        width={88}
+                        height={68}
+                        className="w-22 h-16 object-cover rounded-xl border border-slate-200 shrink-0"
+                      />
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <p className="text-sm font-extrabold text-slate-900 truncate">
+                          {selectedCheckpointProduct.productName}
+                        </p>
+                        <p className="text-slate-600">
+                          ຜູ້ຜະລິດຕົ້ນນ້ຳ (Producer): <strong>{selectedCheckpointProduct.producerName}</strong>
+                        </p>
+                        <p className="text-slate-600">
+                          ພິກັດສວນຕົ້ນນ້ຳ (Origin GPS):{' '}
+                          <strong className="font-mono text-emerald-800">
+                            {selectedCheckpointProduct.geo.lat}, {selectedCheckpointProduct.geo.lng}
+                          </strong>{' '}
+                          ({selectedCheckpointProduct.geo.locationName})
+                        </p>
+                        {selectedCheckpointProduct.category === 'batch' &&
+                          selectedCheckpointProduct.batchData && (
+                            <p className="text-slate-700">
+                              ສາຍພັນ: <strong>{selectedCheckpointProduct.batchData.variety}</strong> •
+                              ນ້ຳໜັກສົດຕົ້ນນ້ຳ:{' '}
+                              <strong>{selectedCheckpointProduct.batchData.freshWeightKg} kg</strong> •
+                              ໂຄວຕາ: <strong>{selectedCheckpointProduct.batchData.plannedBagsCount} ຖົງ</strong>
+                            </p>
+                          )}
+                        {selectedCheckpointProduct.category === 'craft' &&
+                          selectedCheckpointProduct.craftData && (
+                            <p className="text-slate-700">
+                              ຊະນິດໄໝ: <strong>{selectedCheckpointProduct.craftData.silkType}</strong> •
+                              ສີຍ້ອມ: <strong>{selectedCheckpointProduct.craftData.naturalDye}</strong> •
+                              ລາຍ: <strong>{selectedCheckpointProduct.craftData.ancientPattern}</strong>
+                            </p>
+                          )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label htmlFor="checkpoint-gps" className="block text-sm font-semibold text-slate-800">
-                      พิกัด GPS (<code>_locationGPS</code>) <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="checkpoint-gps"
+                      className="block text-xs font-bold text-slate-700"
+                    >
+                      ພິກັດ GPS ໂຮງງານແປຮູບ (Factory GPS) *
                     </label>
                     <button
                       type="button"
                       onClick={handleCaptureCheckpointGps}
-                      className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition"
                     >
                       <MapPin className="w-3 h-3" aria-hidden="true" />
-                      ดึง GPS มือถือจริง
+                      📍 ດຶງ GPS
                     </button>
                   </div>
                   <input
@@ -1475,16 +1583,16 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                     required
                     value={checkpointGps}
                     onChange={(e) => setCheckpointGps(e.target.value)}
-                    placeholder="เช่น 15.1821, 106.2412"
+                    placeholder="15.1821, 106.2412"
                     className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-mono text-slate-900"
                   />
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="processor-name" className="block text-sm font-semibold text-slate-800 mb-1">
-                    ชื่อโรงแปรรูป / สหกรณ์ / ผู้ส่งออก <span className="text-red-500">*</span>
+                  <label
+                    htmlFor="processor-name"
+                    className="block text-xs font-bold text-slate-700 mb-1"
+                  >
+                    ຊື່ໂຮງງານ / ສະຫະກອນ (Processor Name) *
                   </label>
                   <input
                     id="processor-name"
@@ -1496,8 +1604,11 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                   />
                 </div>
                 <div>
-                  <label htmlFor="process-spec" className="block text-sm font-semibold text-slate-800 mb-1">
-                    ค่าพารามิเตอร์สำคัญ (เช่น ระดับการคั่ว / ความชื้น)
+                  <label
+                    htmlFor="process-spec"
+                    className="block text-xs font-bold text-slate-700 mb-1"
+                  >
+                    ລາຍລະອຽດເຕັກນິກ (Roast Level / Moisture)
                   </label>
                   <input
                     id="process-spec"
@@ -1510,8 +1621,11 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
               </div>
 
               <div>
-                <label htmlFor="checkpoint-title" className="block text-sm font-semibold text-slate-800 mb-1">
-                  ชื่อขั้นตอนการแปรรูป (<code>_stageName</code>) <span className="text-red-500">*</span>
+                <label
+                  htmlFor="checkpoint-title"
+                  className="block text-xs font-bold text-slate-700 mb-1"
+                >
+                  ຊື່ຂັ້ນຕອນການຜະລິດ (Stage Name) *
                 </label>
                 <input
                   id="checkpoint-title"
@@ -1524,12 +1638,15 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
               </div>
 
               <div>
-                <label htmlFor="checkpoint-desc" className="block text-sm font-semibold text-slate-800 mb-1">
-                  รายละเอียดการแปรรูป / ตรวจสอบคุณภาพ <span className="text-red-500">*</span>
+                <label
+                  htmlFor="checkpoint-desc"
+                  className="block text-xs font-bold text-slate-700 mb-1"
+                >
+                  ຄຳອະທິບາຍຂັ້ນຕອນ (Step Description) *
                 </label>
                 <textarea
                   id="checkpoint-desc"
-                  rows={3}
+                  rows={2}
                   required
                   value={checkpointDesc}
                   onChange={(e) => setCheckpointDesc(e.target.value)}
@@ -1537,23 +1654,24 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                 />
               </div>
 
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+              {/* Photo & Pinata IPFS */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                   <img
                     src={checkpointImgPreview}
-                    alt="ภาพหลักฐานขั้นตอนกลางน้ำ"
+                    alt="Processing Evidence"
                     width={96}
                     height={72}
-                    className="w-24 h-18 object-cover rounded-lg border border-slate-300 shrink-0"
+                    className="w-24 h-18 object-cover rounded-xl border border-slate-300 shrink-0"
                   />
                   <div className="flex-1 space-y-2 w-full">
                     <div className="flex flex-wrap gap-2">
                       <label
                         htmlFor="checkpoint-photo"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-white border border-slate-300 text-slate-800 hover:bg-slate-100 cursor-pointer"
                       >
                         <Camera className="w-3.5 h-3.5 text-emerald-600" aria-hidden="true" />
-                        1. เลือกรูปหลักฐานการคั่ว/ย้อม
+                        1. ເລືອກຮູບຫຼັກຖານ (Choose Photo)
                       </label>
                       <input
                         id="checkpoint-photo"
@@ -1571,27 +1689,22 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                       >
                         <Upload className="w-3.5 h-3.5 text-emerald-400" aria-hidden="true" />
                         {isUploadingCheckpointIpfs
-                          ? 'กำลังอัปโหลดขึ้น Pinata...'
-                          : '2. อัปโหลดขึ้น Pinata.cloud เพื่อรับ CID ทันที'}
+                          ? 'ກຳລັງອັບໂຫຼດ...'
+                          : '2. ອັບໂຫຼດຂຶ້ນ Pinata IPFS (Get CID)'}
                       </button>
                     </div>
 
-                    <div>
-                      <label htmlFor="checkpoint-ipfs-cid" className="block text-[11px] font-bold text-slate-700 mb-1">
-                        รหัส CID จาก Pinata/IPFS (<code>_evidenceIpfsHash</code>):
-                      </label>
-                      <input
-                        id="checkpoint-ipfs-cid"
-                        type="text"
-                        autocorrect="off"
-                        autocapitalize="off"
-                        spellCheck={false}
-                        value={evidenceIpfsHashInput}
-                        onChange={(e) => setEvidenceIpfsHashInput(e.target.value)}
-                        placeholder="เช่น QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco (จะสร้างให้อัตโนมัติหากเว้นว่าง)"
-                        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-emerald-900"
-                      />
-                    </div>
+                    <input
+                      id="checkpoint-ipfs-cid"
+                      type="text"
+                      autocorrect="off"
+                      autocapitalize="off"
+                      spellCheck={false}
+                      value={evidenceIpfsHashInput}
+                      onChange={(e) => setEvidenceIpfsHashInput(e.target.value)}
+                      placeholder="IPFS CID (ເຊັ່ນ QmXoy... ລະບົບສ້າງໃຫ້ອັດຕະໂນມັດຖ້າປະຫວ່າງໄວ້)"
+                      className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-emerald-900"
+                    />
                   </div>
                 </div>
               </div>
@@ -1599,24 +1712,25 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
               <button
                 type="submit"
                 disabled={isSubmittingCheckpoint}
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-md"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-extrabold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-60 transition shadow-md"
               >
                 {isSubmittingCheckpoint ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin" aria-hidden="true" />
-                    กำลังอัปโหลด IPFS & บันทึก addCheckpoint() บน LAB Chain...
+                    ກຳລັງບັນທຶກຂັ້ນຕອນລົງ Blockchain...
                   </>
                 ) : (
                   <>
                     <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                    บันทึกขั้นตอนลง Blockchain (contract.addCheckpoint)
+                    ບັນທຶກຂັ້ນຕອນລົງ Blockchain (Save Checkpoint)
                   </>
                 )}
               </button>
             </form>
           </div>
 
-          <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          {/* Right 5 Cols: Current Timeline Preview */}
+          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 shadow-sm p-6">
             {(() => {
               const target = products.find((p) => p.tokenId === selectedTokenId) || products[0];
               if (!target) return null;
@@ -1625,21 +1739,21 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                   <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                     <div>
                       <span className="text-xs font-bold text-emerald-700 uppercase">
-                        Product ID #{target.tokenId}
+                        Product #{target.tokenId}
                       </span>
-                      <h3 className="text-lg font-bold text-slate-900">{target.productName}</h3>
+                      <h3 className="text-lg font-extrabold text-slate-900">{target.productName}</h3>
                     </div>
                     <button
                       type="button"
                       onClick={() => onOpenConsumerView(target.tokenId)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-white hover:bg-slate-800"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-900 text-white hover:bg-slate-800"
                     >
-                      เปิดหน้าผู้บริโภค
+                      ເບິ່ງໜ້າຜູ້ບໍລິໂພກ
                     </button>
                   </div>
 
-                  <p className="text-xs font-semibold text-slate-500 mt-4 mb-3">
-                    ประวัติ productTimelines[{target.tokenId}] ปัจจุบัน ({target.checkpoints.length} ขั้นตอน):
+                  <p className="text-xs font-bold text-slate-500 mt-4 mb-3">
+                    ປະຫວັດຂັ້ນຕອນປັດຈຸບັນ • Current Timeline ({target.checkpoints.length} Steps):
                   </p>
                   <ol className="relative border-s-2 border-emerald-200 ms-3 space-y-4">
                     {target.checkpoints.map((cp) => (
@@ -1667,6 +1781,59 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
                       </li>
                     ))}
                   </ol>
+
+                  {/* Packaging Scratch PINs for Midstream */}
+                  {target.quota && target.quota.generatedUnits.length > 0 && (
+                    <div className="mt-6 pt-5 border-t border-slate-200">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                        <div>
+                          <span className="text-xs font-extrabold text-slate-900 block">
+                            🏷️ ລະຫັດ PIN ຂູດກັນປອມປະຈຳຖົງ (Packaging Scratch PINs)
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            ໂຄວຕາບັນຈຸທັງໝົດ {target.quota.generatedUnits.length} ຖົງ (ແຕ່ລະຖົງມີ QR Code + PIN ສະເພາະ)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => openRetailStickersDialog(target)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition shrink-0"
+                        >
+                          <Printer className="w-3.5 h-3.5" aria-hidden="true" />
+                          ພິມສະຕິກເກີ QR ຂາຍຈິງ
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mb-3">
+                        ລະຫັດ PIN 6 ຕົວເລກສຳລັບຂັ້ນຕອນບັນຈຸຫີບຫໍ່ (ສຳລັບຜູ້ບໍລິໂພກຂູດກວດສອບຂອງແທ້)
+                      </p>
+                      <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                        {target.quota.generatedUnits.map((u, idx) => (
+                          <div
+                            key={u.unitCode}
+                            className="p-2.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between text-xs"
+                          >
+                            <span className="font-mono font-bold text-slate-800">
+                              #{idx + 1} {u.unitCode}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded">
+                                PIN: {u.pinCode}
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  u.isClaimed
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-emerald-100 text-emerald-800'
+                                }`}
+                              >
+                                {u.isClaimed ? 'Claimed' : 'Active'}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -1674,241 +1841,171 @@ export const ProducerProcessorPortal: React.FC<ProducerProcessorPortalProps> = (
         </div>
       )}
 
-      {/* TAB 3: MASS BALANCE CALCULATOR */}
-      {activeSubTab === 'mass-balance' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800">
-                <Scale className="w-5 h-5" aria-hidden="true" />
-              </div>
-              <h2 className="text-xl font-bold text-slate-900">
-                On-Chain Mass Balance Calculator
-              </h2>
-            </div>
-            <p className="text-sm text-slate-600">
-              ตรงกับเงื่อนไขบน Smart Contract (<code>LaoTraceWeb3.sol</code>):{' '}
-              <code>require(_requestedUnits &lt;= _rawWeightKg * 2)</code> เพื่อป้องกันการนำกาแฟเกรดต่ำมาสวมรอย
-            </p>
-
-            <form onSubmit={handleCalculateMassBalance} className="mt-6 space-y-4">
-              <div>
-                <label htmlFor="quota-token" className="block text-sm font-semibold text-slate-800 mb-1">
-                  เลือกล็อตสินค้าเกษตร (<code>_productId</code>)
-                </label>
-                <select
-                  id="quota-token"
-                  value={quotaTokenId}
-                  onChange={(e) => {
-                    const id = Number(e.target.value);
-                    setQuotaTokenId(id);
-                    const found = products.find((p) => p.tokenId === id);
-                    if (found?.batchData) {
-                      setRawInputKg(found.batchData.freshWeightKg);
-                      setUnitBagGrams(found.batchData.bagWeightGrams);
-                      setRequestedBagUnits(found.batchData.plannedBagsCount);
-                    }
-                  }}
-                  className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900"
-                >
-                  {products.map((p) => (
-                    <option key={p.tokenId} value={p.tokenId}>
-                      Product #{p.tokenId} — {p.productName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="raw-kg" className="block text-sm font-semibold text-slate-800 mb-1">
-                    น้ำหนักผลผลิตสด <code>_rawWeightKg</code> (กก.)
-                  </label>
-                  <input
-                    id="raw-kg"
-                    type="number"
-                    min={1}
-                    value={rawInputKg}
-                    onChange={(e) => setRawInputKg(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="req-bags" className="block text-sm font-semibold text-slate-800 mb-1">
-                    จำนวนถุงที่ขอ <code>_requestedUnits</code> (ถุง)
-                  </label>
-                  <input
-                    id="req-bags"
-                    type="number"
-                    min={1}
-                    value={requestedBagUnits}
-                    onChange={(e) => setRequestedBagUnits(Number(e.target.value))}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900"
-                  />
-                </div>
-              </div>
-
-              <div
-                className={`p-4 rounded-2xl border ${
-                  isLiveOverQuota
-                    ? 'bg-red-50 border-red-300 text-red-950'
-                    : 'bg-emerald-50 border-emerald-300 text-emerald-950'
-                }`}
-              >
-                <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider">
-                  <span>กฎ Mass Balance บน LaoTraceWeb3.sol</span>
-                  <span>{isLiveOverQuota ? 'เกินโควตา (Smart Contract Revert!)' : 'ผ่านเกณฑ์ On-Chain'}</span>
-                </div>
-                <p className="text-sm mt-2">
-                  น้ำหนักสด <strong>{rawInputKg.toLocaleString()} กก.</strong> × 2 = โควตาสูงสุดบนเชน{' '}
-                  <strong className="underline">{liveMaxAllowedBags.toLocaleString()} ถุง</strong> (คุณขอออกรหัส{' '}
-                  <strong>{requestedBagUnits.toLocaleString()} ถุง</strong>)
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isGeneratingQuota}
-                className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-bold bg-slate-900 text-white hover:bg-slate-800 transition"
-              >
-                <QrCode className="w-4 h-4" aria-hidden="true" />
-                คำนวณโควตา & สร้างรหัส Unit Serial + PIN รายถุง
-              </button>
-            </form>
-          </div>
-
-          <div className="lg:col-span-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900">
-                  รหัส QR Code รายถุง (Unit #1 .. maxUnits) & รหัส PIN
-                </h3>
-                <p className="text-xs text-slate-500">
-                  เชื่อมกับ <code>claimUnit(_productId, _unitNumber)</code> และ{' '}
-                  <code>isUnitClaimed</code> บน Smart Contract
-                </p>
-              </div>
-              {selectedQuotaProduct && (
-                <button
-                  type="button"
-                  onClick={() => openQrLabelDialog(selectedQuotaProduct)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700"
-                >
-                  <Printer className="w-3.5 h-3.5" aria-hidden="true" />
-                  พิมพ์ใบปะหน้าทั้งหมด
-                </button>
-              )}
-            </div>
-
-            {selectedQuotaProduct?.quota ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {selectedQuotaProduct.quota.generatedUnits.map((unit) => (
-                  <div
-                    key={unit.unitCode}
-                    className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3"
-                  >
-                    <div>
-                      <span className="text-xs font-bold font-mono text-slate-900">
-                        {unit.unitCode}
-                      </span>
-                      <div className="mt-1 flex items-center gap-1.5">
-                        <span className="text-xs text-slate-500">PIN ขูด:</span>
-                        <code className="px-2 py-0.5 rounded bg-amber-100 text-amber-950 font-mono text-xs font-bold">
-                          {unit.pinCode}
-                        </code>
-                      </div>
-                      <span
-                        className={`inline-block mt-1.5 text-[11px] font-semibold ${
-                          unit.isClaimed ? 'text-red-600' : 'text-emerald-700'
-                        }`}
-                      >
-                        {unit.isClaimed ? 'isUnitClaimed = true' : 'isUnitClaimed = false'}
-                      </span>
-                    </div>
-                    <div className="bg-white p-1.5 rounded-lg border border-slate-200">
-                      <QRCodeSVG
-                        value={`${window.location.origin}${unit.qrVerifyUrl}`}
-                        size={58}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-xl border border-dashed border-slate-300">
-                กดปุ่ม "คำนวณโควตา & สร้างรหัส Unit Serial" ด้านซ้ายเพื่อสร้างป้ายรายถุง
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Printable QR Code Label Modal */}
+      {/* Printable Product Code Modal */}
       <dialog
         ref={qrDialogRef}
         closedby="any"
-        className="rounded-2xl p-0 max-w-lg w-full shadow-2xl border border-slate-200 bg-white text-slate-900"
+        className="rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 bg-white text-slate-900"
       >
         {qrModalProduct && (
-          <div className="p-6">
-            <div id="printable-qr-area" className="border-2 border-slate-900 rounded-2xl p-6 text-center bg-white">
-              <p className="text-xs font-bold uppercase tracking-widest text-emerald-700">
-                LAOTRACEWEB3 • LAB CHAIN VERIFIED (CHAIN ID: 5222)
-              </p>
-              <h3 className="text-lg font-bold text-slate-900 mt-1">
+          <div>
+            <div
+              id="printable-qr-area"
+              className="p-5 border-2 border-dashed border-emerald-600 rounded-2xl text-center space-y-3"
+            >
+              <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-900">
+                LAOTRACE VERIFIED • ID #{qrModalProduct.tokenId}
+              </span>
+              <h3 className="text-lg font-extrabold text-slate-900">
                 {qrModalProduct.productName}
               </h3>
               <p className="text-xs text-slate-600">{qrModalProduct.producerName}</p>
 
-              <div className="my-4 inline-block p-3 bg-white border border-slate-300 rounded-2xl">
-                <QRCodeSVG
-                  value={`${window.location.origin}/verify/${qrModalProduct.tokenId}`}
-                  size={180}
-                  level="H"
-                  includeMargin
-                />
+              <div className="my-3 p-4 bg-slate-900 text-white rounded-2xl border border-emerald-500/40">
+                <p className="text-[11px] uppercase tracking-wider text-emerald-300 font-bold">
+                  ລະຫັດສິນຄ້າຕົ້ນນ້ຳ (Product Code)
+                </p>
+                <p className="text-2xl font-mono font-extrabold tracking-widest text-amber-300 mt-1">
+                  LT-2026-{String(qrModalProduct.tokenId).padStart(3, '0')}
+                </p>
+                <p className="text-xs text-slate-300 mt-1">
+                  On-Chain Product ID: #{qrModalProduct.tokenId}
+                </p>
               </div>
 
+              {qrModalProduct.quota?.generatedUnits && (
+                <div className="text-start bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                  <p className="text-[11px] font-bold text-slate-700">
+                    ລະຫັດ PIN ປະຈຳຖົງ (Unit Scratch PINs):
+                  </p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {qrModalProduct.quota.generatedUnits.map((u, idx) => (
+                      <div
+                        key={u.unitCode}
+                        className="px-2 py-1 rounded bg-white border border-slate-200 text-[11px] font-mono flex justify-between"
+                      >
+                        <span>ຖົງ #{idx + 1}:</span>
+                        <strong className="text-emerald-800">{u.pinCode}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <p className="text-xs font-mono text-slate-700">
-                productId: #{qrModalProduct.tokenId} • GPS: {qrModalProduct.geo.lat}, {qrModalProduct.geo.lng}
+                GPS: {qrModalProduct.geo.lat}, {qrModalProduct.geo.lng}
               </p>
-
-              {qrModalProduct.quota?.generatedUnits?.[0] && (
-                <div className="mt-3 p-2.5 bg-amber-50 border border-dashed border-amber-400 rounded-xl">
-                  <p className="text-xs font-semibold text-amber-900">
-                    Unit #1 • รหัส PIN ขูดยืนยันของแท้:{' '}
-                    <code className="font-mono font-bold text-sm">
-                      {qrModalProduct.quota.generatedUnits[0].pinCode}
-                    </code>
-                  </p>
-                </div>
-              )}
-
-              {qrModalProduct.craftData?.nfcUid && (
-                <div className="mt-3 p-2.5 bg-purple-50 border border-dashed border-purple-400 rounded-xl">
-                  <p className="text-xs font-semibold text-purple-900 flex items-center justify-center gap-1">
-                    <Cpu className="w-3.5 h-3.5" aria-hidden="true" />
-                    Unique Item (maxUnits = 1) • NFC: <code className="font-mono">{qrModalProduct.craftData.nfcUid}</code>
-                  </p>
-                </div>
-              )}
+              <p className="text-[11px] text-emerald-800 font-bold">
+                ນຳລະຫັດສິນຄ້າໄປຄົ້ນຫາເພື່ອກວດສອບແຫຼ່ງທີ່ມາ & ປ້ອນ PIN ຢືນຢັນຂອງແທ້
+              </p>
             </div>
 
-            <div className="mt-5 flex items-center justify-end gap-2">
+            <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => window.print()}
                 className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700"
               >
                 <Printer className="w-4 h-4" aria-hidden="true" />
-                สั่งพิมพ์ป้าย (Print)
+                ພິມໃບລະຫັດສິນຄ້າ (Print Code)
               </button>
               <form method="dialog">
                 <button
                   type="submit"
-                  className="px-4 py-2.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-200 text-slate-800 hover:bg-slate-300"
                 >
-                  ปิดหน้าต่าง
+                  ປິດ (Close)
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+      </dialog>
+
+      {/* Retail Unit QR Code Stickers Sheet Modal */}
+      <dialog
+        ref={retailDialogRef}
+        closedby="any"
+        className="rounded-3xl p-6 max-w-3xl w-full shadow-2xl border border-slate-200 bg-white text-slate-900"
+      >
+        {retailModalProduct && (
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <div>
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-emerald-100 text-emerald-900">
+                  RETAIL PACKAGING LABELS • ລັອດ #{retailModalProduct.tokenId}
+                </span>
+                <h3 className="text-lg font-extrabold text-slate-900 mt-1">
+                  ໃບສະຕິກເກີ QR Code ຂາຍຈິງສຳລັບຕິດຖົງບັນຈຸ (Retail QR Code Stickers)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  ແຕ່ລະຖົງຈະມີ QR Code ສະເພາະ (ເຊື່ອມຕໍ່ຫາ /product/{retailModalProduct.tokenId}/unit/[ເລກຖົງ]) + ລະຫັດ PIN ຂູດກັນປອມ
+                </p>
+              </div>
+              <form method="dialog">
+                <button
+                  type="submit"
+                  className="px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200"
+                >
+                  ✕ ປິດ
+                </button>
+              </form>
+            </div>
+
+            <div
+              id="printable-retail-stickers-area"
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-2"
+            >
+              {(retailModalProduct.quota?.generatedUnits || [
+                { unitCode: `LT-U-1`, pinCode: '884920', isClaimed: false },
+              ]).map((u, idx) => {
+                const unitNum = idx + 1;
+                const unitUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/product/${retailModalProduct.tokenId}/unit/${unitNum}`;
+                return (
+                  <div
+                    key={u.unitCode}
+                    className="p-3.5 border-2 border-dashed border-emerald-500/50 rounded-2xl bg-emerald-50/30 flex flex-col items-center text-center space-y-2 shadow-sm"
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                      LaoTrace Authentic • ຖົງ #{unitNum}
+                    </span>
+                    <p className="text-xs font-bold text-slate-900 line-clamp-1">
+                      {retailModalProduct.productName}
+                    </p>
+                    <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-inner">
+                      <QRCodeSVG value={unitUrl} size={110} level="M" />
+                    </div>
+                    <p className="text-[10px] font-mono text-slate-500 truncate w-full">
+                      /product/{retailModalProduct.tokenId}/unit/{unitNum}
+                    </p>
+                    <div className="w-full bg-slate-900 text-amber-300 rounded-lg p-1.5 text-center">
+                      <p className="text-[9px] uppercase tracking-wider text-slate-300 font-bold">
+                        🔒 ລະຫັດຂູດກັນປອມ (Scratch PIN)
+                      </p>
+                      <p className="text-sm font-mono font-black tracking-widest mt-0.5">
+                        {u.pinCode}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 shadow-md"
+              >
+                <Printer className="w-4 h-4" aria-hidden="true" />
+                ພິມໃບສະຕິກເກີທັງໝົດ (Print Stickers Sheet)
+              </button>
+              <form method="dialog">
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 rounded-xl text-xs font-bold bg-slate-200 text-slate-800 hover:bg-slate-300"
+                >
+                  ປິດ (Close)
                 </button>
               </form>
             </div>

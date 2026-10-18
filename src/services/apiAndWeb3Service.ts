@@ -66,7 +66,7 @@ export async function connectMetaMaskToLabChain(): Promise<{
   const ethereum = getEthereumProvider();
   if (!ethereum) {
     throw new Error(
-      'ไม่พบส่วนขยาย MetaMask ในเบราว์เซอร์ กรุณาติดตั้ง MetaMask หรือสลับเป็นโหมด Gasless Relayer'
+      'ບໍ່ພົບ MetaMask ໃນບຣາວເຊີ ກະລຸນາຕິດຕັ້ງ MetaMask ຫຼື ປ່ຽນເປັນໂໝດ Gasless (MetaMask not found)'
     );
   }
 
@@ -75,7 +75,7 @@ export async function connectMetaMaskToLabChain(): Promise<{
   })) as string[];
 
   if (!accounts || accounts.length === 0) {
-    throw new Error('ไม่ได้รับอนุญาตให้เข้าถึงบัญชีกระเป๋า MetaMask');
+    throw new Error('ບໍ່ໄດ້ຮັບອະນຸຍາດໃຫ້ເຂົ້າເຖິງບັນຊີ MetaMask (Account access denied)');
   }
 
   const targetHex = toHexChainId(labChain.chainId);
@@ -454,7 +454,7 @@ export async function callRegisterProductOnChain(params: {
 
   if (category === 'batch' && effectiveUnits > effectiveWeightKg * 2) {
     throw new Error(
-      `กฎ Mass Balance บน Smart Contract บล็อกรายการ: จำนวนถุง (${effectiveUnits}) ต้องไม่เกิน 2 เท่าของน้ำหนักผลผลิตสด (${effectiveWeightKg * 2} ถุง)!`
+      `ກົດໂຄວຕາເທິງ Smart Contract: ຈຳນວນຖົງ (${effectiveUnits}) ຕ້ອງບໍ່ເກີນ 2 ເທົ່າຂອງນ້ຳໜັກຜົນຜະລິດສົດ (${effectiveWeightKg * 2} ຖົງ)!`
     );
   }
 
@@ -486,7 +486,7 @@ export async function callRegisterProductOnChain(params: {
         };
       }
     } catch {
-      // Fallback สำหรับโหมด Gasless Relayer
+      // Fallback
     }
     await new Promise((r) => setTimeout(r, 900));
     return {
@@ -528,13 +528,13 @@ export async function callRegisterProductOnChain(params: {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.toLowerCase().includes('user rejected') || msg.toLowerCase().includes('action_rejected')) {
-        throw new Error('คุณกดยกเลิกการเซ็นรายการ (Transaction Rejected) ใน MetaMask');
+        throw new Error('ທ່ານກົດຍົກເລີກການເຊັນທຸລະກຳໃນ MetaMask (Transaction Rejected)');
       }
       if (msg.includes('Not an authorized producer')) {
-        throw new Error('กระเป๋านี้ยังไม่ได้รับสิทธิ์ Producer (ให้ Admin กด grantRoles ในเมนูตั้งค่า)');
+        throw new Error('ກະເປົານີ້ຍັງບໍ່ໄດ້ຮັບສິດ Producer (ໃຫ້ Admin ກົດອະນຸມັດສິດໃນເມນູ ຕັ້ງຄ່າ)');
       }
       if (msg.includes('Requested units exceed raw harvest weight quota')) {
-        throw new Error('จำนวนถุงเกินโควตา Mass Balance บน Smart Contract (ห้ามเกิน rawWeightKg * 2)');
+        throw new Error('ຈຳນວນຖົງເກີນໂຄວຕາເທິງ Smart Contract (ຫ້າມເກີນ rawWeightKg * 2)');
       }
     }
   }
@@ -548,7 +548,6 @@ export async function callRegisterProductOnChain(params: {
 }
 
 /**
- * เรียก Smart Contract ฟังก์ชันที่ 2 ของ LaoTraceWeb3.sol:
  * contract.addCheckpoint(_productId, _stageName, _locationGPS, _evidenceIpfsHash)
  */
 export async function callAddCheckpointOnChain(params: {
@@ -631,10 +630,10 @@ export async function callAddCheckpointOnChain(params: {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.toLowerCase().includes('user rejected') || msg.toLowerCase().includes('action_rejected')) {
-        throw new Error('คุณกดยกเลิกการเซ็นรายการ (Transaction Rejected) ใน MetaMask');
+        throw new Error('ທ່ານກົດຍົກເລີກການເຊັນທຸລະກຳໃນ MetaMask (Transaction Rejected)');
       }
       if (msg.includes('Caller is not an authorized producer or processor')) {
-        throw new Error('กระเป๋านี้ยังไม่ได้รับสิทธิ์ Processor (ให้ Admin กด grantRoles ในเมนูตั้งค่า)');
+        throw new Error('ກະເປົານີ້ຍັງບໍ່ໄດ້ຮັບສິດ Processor (ໃຫ້ Admin ກົດອະນຸມັດສິດໃນເມນູ ຕັ້ງຄ່າ)');
       }
     }
   }
@@ -648,7 +647,6 @@ export async function callAddCheckpointOnChain(params: {
 }
 
 /**
- * เรียก Smart Contract ฟังก์ชันที่ 3 ของ LaoTraceWeb3.sol:
  * contract.certifyProduct(_productId, _certIpfsHash)
  */
 export async function callCertifyProductOnChain(params: {
@@ -717,10 +715,10 @@ export async function callCertifyProductOnChain(params: {
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (msg.toLowerCase().includes('user rejected') || msg.toLowerCase().includes('action_rejected')) {
-        throw new Error('คุณกดยกเลิกการเซ็นรายการ (Transaction Rejected) ใน MetaMask');
+        throw new Error('ທ່ານກົດຍົກເລີກການເຊັນທຸລະກຳໃນ MetaMask (Transaction Rejected)');
       }
       if (msg.includes('Not an authorized certifier')) {
-        throw new Error('กระเป๋านี้ยังไม่ได้รับสิทธิ์ Certifier (ให้ Admin กด grantRoles ในเมนูตั้งค่า)');
+        throw new Error('ກະເປົານີ້ຍັງບໍ່ໄດ້ຮັບສິດ Certifier (ໃຫ້ Admin ກົດອະນຸມັດສິດໃນເມນູ ຕັ້ງຄ່າ)');
       }
     }
   }
@@ -745,24 +743,104 @@ export async function callClaimUnitOnChain(params: {
   const { productId, unitNumber, contractAddress = DEFAULT_CONTRACT_ADDRESS } = params;
   const ethereum = getEthereumProvider();
   if (ethereum) {
-    const browserProvider = new BrowserProvider(ethereum);
-    const code = await browserProvider.getCode(contractAddress);
-    if (code && code !== '0x') {
+    try {
       await connectMetaMaskToLabChain();
-      const signer = await browserProvider.getSigner();
-      const contract = LaoTrace__factory.connect(contractAddress, signer);
-      const tx = await contract.claimUnit(BigInt(productId), BigInt(unitNumber));
-      const receipt = await tx.wait();
-      return {
-        txHash: receipt?.hash || tx.hash,
-        onChainConfirmed: true,
-      };
+      const browserProvider = new BrowserProvider(ethereum);
+      const code = await browserProvider.getCode(contractAddress);
+      if (code && code !== '0x') {
+        const signer = await browserProvider.getSigner();
+        const contract = LaoTrace__factory.connect(contractAddress, signer);
+        const tx = await contract.claimUnit(BigInt(productId), BigInt(unitNumber));
+        const receipt = await tx.wait();
+        return {
+          txHash: receipt?.hash || tx.hash,
+          onChainConfirmed: true,
+        };
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (
+        msg.toLowerCase().includes('user rejected') ||
+        msg.toLowerCase().includes('action_rejected')
+      ) {
+        throw new Error('ທ່ານກົດຍົກເລີກການເຊັນທຸລະກຳໃນ MetaMask (Transaction Rejected)');
+      }
+      if (msg.includes('This unit has already been claimed')) {
+        throw new Error(
+          'ສິນຄ້າຊິ້ນ/ຖົງນີ້ຖືກ Claim ຢືນຢັນສິດໄປແລ້ວ! ລະວັງສິນຄ້າປອມ (Already Claimed — Counterfeit Alert!)'
+        );
+      }
+      if (msg.includes('Invalid unit number')) {
+        throw new Error('ໝາຍເລກລຳດັບຊິ້ນສິນຄ້າບໍ່ຖືກຕ້ອງ (Invalid unit number)');
+      }
+      if (msg.includes('Product does not exist')) {
+        throw new Error('ບໍ່ພົບລະຫັດສິນຄ້ານີ້ເທິງ Blockchain (Product does not exist)');
+      }
+      throw err;
     }
   }
   return {
     txHash: generateMockTxHash(),
     onChainConfirmed: false,
   };
+}
+
+/**
+ * ตรวจสอบสถานะการ Claim ของสินค้าชิ้นนั้นบน Smart Contract ผ่าน Read-Only Provider (ฟรี ไม่เสียค่า Gas):
+ * contract.isUnitClaimed(productId, unitNumber)
+ */
+export async function checkUnitClaimStatus(
+  productId: number,
+  unitNumber: number,
+  contractAddress: string = DEFAULT_CONTRACT_ADDRESS
+): Promise<boolean> {
+  try {
+    const readProvider = getReadOnlyProvider();
+    const code = await readProvider.getCode(contractAddress);
+    if (!code || code === '0x') return false;
+    const contract = LaoTrace__factory.connect(contractAddress, readProvider);
+    return await contract.isUnitClaimed(BigInt(productId), BigInt(unitNumber));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * ดึงสิทธิ์ของกระเป๋าปัจจุบันจาก Smart Contract:
+ * authorizedProducers, authorizedProcessors, authorizedCertifiers, admin
+ */
+export async function fetchUserRolesOnChain(
+  accountAddress: string,
+  contractAddress: string = DEFAULT_CONTRACT_ADDRESS
+): Promise<{
+  isProducer: boolean;
+  isProcessor: boolean;
+  isCertifier: boolean;
+  isAdmin: boolean;
+}> {
+  try {
+    const readProvider = getReadOnlyProvider();
+    const code = await readProvider.getCode(contractAddress);
+    if (!code || code === '0x') {
+      return { isProducer: true, isProcessor: true, isCertifier: true, isAdmin: true };
+    }
+    const contract = LaoTrace__factory.connect(contractAddress, readProvider);
+    const [isProducer, isProcessor, isCertifier, adminAddr] = await Promise.all([
+      contract.authorizedProducers(accountAddress),
+      contract.authorizedProcessors(accountAddress),
+      contract.authorizedCertifiers(accountAddress),
+      contract.admin(),
+    ]);
+    const isAdmin = adminAddr.toLowerCase() === accountAddress.toLowerCase();
+    return {
+      isProducer,
+      isProcessor,
+      isCertifier,
+      isAdmin,
+    };
+  } catch {
+    return { isProducer: true, isProcessor: true, isCertifier: true, isAdmin: true };
+  }
 }
 
 /**
