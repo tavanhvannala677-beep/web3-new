@@ -24,10 +24,7 @@
 ---
 
 ## การเชื่อมต่อกับเพื่อนฝั่ง Backend (3 API Endpoints)
-## การเชื่อมต่อกับเพื่อนฝั่ง Backend (3 API Endpoints)
-## การเชื่อมต่อกับเพื่อนฝั่ง Backend (3 API Endpoints)
-## การเชื่อมต่อกับเพื่อนฝั่ง Backend (3 API Endpoints)
-## การเชื่อมต่อกับเพื่อนฝั่ง Backend (3 API Endpoints)
+
 iOS
 สามารถตั้งค่า `Backend REST API URL` และ `Contract Address` ได้โดยตรงจากปุ่ม **ฟันเฟือง (Settings)** มุมขวาบนของหน้าเว็บ:
 
