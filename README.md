@@ -28,7 +28,7 @@
 
 3. **หน้าจอที่ 3: Consumer Verification Page (`src/components/ConsumerVerificationPage.tsx`) ⭐**
 
-
+![/Users/macbook/Downloads/My-Downloads/My coupon detail 4/Stamp card/confirm collecting stamp.png](<confirm collecting stamp.png>)
 
 
    - **Read-Only Blockchain Connection (`ethers.JsonRpcProvider`):** ดึงข้อมูลจาก `contract.getTimeline(tokenId)` บน LAB Chain (`https://rpc.labchain.la`) และ IPFS Gateway ทันทีโดยไม่ต้องติดตั้งหรือเชื่อมต่อ MetaMask
