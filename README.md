@@ -17,6 +17,20 @@
    - อัปโหลดไฟล์ PDF ใบรับรองขึ้น IPFS และกดปุ่ม **Verify & Certify On-Chain** เพื่อเรียก `contract.certifyProduct(tokenId, certIpfsHash)` (`isCertified = true`)
 
 3. **หน้าจอที่ 3: Consumer Verification Page (`src/components/ConsumerVerificationPage.tsx`) ⭐**
+
+3. **หน้าจอที่ 3: Consumer Verification Page (`src/components/ConsumerVerificationPage.tsx`) ⭐**
+
+3. **หน้าจอที่ 3: Consumer Verification Page (`src/components/ConsumerVerificationPage.tsx`) ⭐**
+
+3. **หน้าจอที่ 3: Consumer Verification Page (`src/components/ConsumerVerificationPage.tsx`) ⭐**
+
+3. **หน้าจอที่ 3: Consumer Verification Page (`src/components/ConsumerVerificationPage.tsx`) ⭐**
+
+3. **หน้าจอที่ 3: Consumer Verification Page (`src/components/ConsumerVerificationPage.tsx`) ⭐**
+
+
+
+
    - **Read-Only Blockchain Connection (`ethers.JsonRpcProvider`):** ดึงข้อมูลจาก `contract.getTimeline(tokenId)` บน LAB Chain (`https://rpc.labchain.la`) และ IPFS Gateway ทันทีโดยไม่ต้องติดตั้งหรือเชื่อมต่อ MetaMask
    - **Interactive Provenance Timeline & Origin Map:** แสดงเส้นทางสินค้าทุกขั้นตอน แผนที่พิกัดสวน และปุ่ม **View on LAB Chain Block Explorer**
    - **100% Verified Lao Organic / GI Badge & Ownership Claim:** เปิดดูไฟล์ใบเซอร์ตัวจริงจาก IPFS และกรอกรหัส PIN ขูดรายถุง / แตะชิป NFC เพื่อยืนยันความเป็นเจ้าของครั้งแรก
