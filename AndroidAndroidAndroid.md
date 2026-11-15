@@ -1,1 +1,1 @@
-AndroidAndroidAndroidAndroidAndroidAndroid
+AndroidAndroidAndroid
