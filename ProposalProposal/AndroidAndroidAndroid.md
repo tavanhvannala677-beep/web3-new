@@ -34,6 +34,9 @@ iOSiOS
 62
 62
 62
+62
+62
+62
 
 
 AndroidAndroidAndroid
